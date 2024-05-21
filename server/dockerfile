@@ -13,7 +13,7 @@ RUN mv ./handler ./server/handler
 COPY ./pkg/ ./pkg
 COPY ./shared ./shared
 COPY ./api/ ./api/
-COPY web/ ./web
+COPY /server/web/ ./server/web
 COPY jwt.ed jwt.ed.pub ./
 #RUN go build -o main
 

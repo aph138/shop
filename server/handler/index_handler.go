@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/aph138/shop/pkg/auth"
-	"github.com/aph138/shop/web"
+	"github.com/aph138/shop/server/web"
 	"github.com/gin-gonic/gin"
 )
 

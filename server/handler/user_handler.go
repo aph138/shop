@@ -9,8 +9,8 @@ import (
 
 	pb "github.com/aph138/shop/api/user_grpc"
 	"github.com/aph138/shop/pkg/auth"
+	"github.com/aph138/shop/server/web"
 	"github.com/aph138/shop/shared"
-	"github.com/aph138/shop/web"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

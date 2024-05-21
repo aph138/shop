@@ -1,0 +1,35 @@
+syntax = "proto3";
+option go_package = "github.com/aph138/shop/user_grpc";
+
+service User{
+    rpc Signin (SigninRequest) returns (SigninResponse) {}
+    rpc Signup (SignupRequest) returns (SigninResponse) {}
+    rpc UserList(Empty) returns (stream UserListResponse){}
+}
+
+
+message SigninRequest{
+     string username=1;
+     string password=2;
+}
+
+
+message SigninResponse{
+     string id=1;
+}
+
+message SignupRequest{
+     string username=1;
+     string email=2;
+     string password=3;
+     uint32 role=4;   
+}
+
+message UserListResponse{
+     string id=1;
+     string username=2;
+     string email=3;
+     uint32 role=4;
+     bool status=5;
+}
+message Empty{}

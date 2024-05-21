@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  #main server service
+  server:
+    build:
+      # specify context to be able copy go.mod and go.sum
+      context: .
+      dockerfile: ./server/dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      - ADDRESS=:9000
+      - USER_SERVICE=user_service:9001
+    depends_on:
+      - user_service
+  
+  #user service
+  user_service:
+    build:
+      context: .
+      dockerfile: ./user_service/dockerfile
+    ports:
+      - "9001:9001"
+    depends_on:
+      - mongodb
+    #note the mongodb -> it is the same with database service
+    environment:
+      - mongoURL=mongodb://mongodb:27017
+      - DB_NAME=mydb
+
+  #database service
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo:/data/db
+
+volumes:
+  mongo:

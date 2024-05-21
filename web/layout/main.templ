@@ -1,0 +1,13 @@
+package layout
+
+templ Main(title string){
+    <html>
+    <head>
+        <script src="/public/js/htmx.min.js"/>
+        <title>{title}</title>
+    </head>
+    <body>
+        {children...}
+    </body>
+    </html>
+}

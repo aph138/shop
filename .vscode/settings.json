@@ -1,0 +1,6 @@
+
+{
+    "emmet.includeLanguages": {
+        "templ": "html"
+      }
+}

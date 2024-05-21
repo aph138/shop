@@ -1,0 +1,22 @@
+FROM golang
+
+WORKDIR /app
+
+#because we use parent directory as context
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+COPY ./user_service .
+COPY ./api/user_grpc ./api/user_grpc
+COPY ./shared ./shared
+COPY ./pkg/ ./pkg
+
+#RUN go build -o main .
+
+EXPOSE 9001
+
+#CMD [ "./main" ]
+
+CMD [ "go", "run", "." ]

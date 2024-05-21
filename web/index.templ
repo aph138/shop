@@ -1,0 +1,15 @@
+package web
+import "github.com/aph138/shop/web/layout"
+templ Index(r bool){
+    @layout.Main("Index"){
+        if r{
+            <div>you are signed in</div>
+             <button hx-get="/test" hx-target="#result" hx-trigger="click">GET</button>
+             <div id="result"></div>
+        }else{
+             <div>you are not signed in</div>
+             <a href="/signin">Sign in</a>
+            
+        }
+    }
+}

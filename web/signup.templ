@@ -1,0 +1,13 @@
+package web
+import "github.com/aph138/shop/web/layout"
+templ Signup(){
+    @layout.Main("Sign up"){
+        <form Method="POST" action="/signup">
+            <input type="username" name="username" placeholder="username"/><br/>
+            <input type="email" name="email" placeholder="email"/><br/>
+            <input type="password" name="password" placeholder="password"/><br/>
+            <input type="password" name="confirmPassword" placeholder="re-enter password"/><br/>
+            <button type="submit">signup</button>
+        </form>
+    }
+}

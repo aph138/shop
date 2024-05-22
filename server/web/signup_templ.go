@@ -31,7 +31,7 @@ func Signup() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form Method=\"POST\" action=\"/signup\"><input type=\"username\" name=\"username\" placeholder=\"username\"><br><input type=\"email\" name=\"email\" placeholder=\"email\"><br><input type=\"password\" name=\"password\" placeholder=\"password\"><br><input type=\"password\" name=\"confirmPassword\" placeholder=\"re-enter password\"><br><button type=\"submit\">signup</button></form>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form id=\"form\"><input type=\"username\" name=\"username\" placeholder=\"username\"><br><input type=\"email\" name=\"email\" placeholder=\"email\"><br><input type=\"password\" name=\"password\" placeholder=\"password\"><br><input type=\"password\" name=\"confirmPassword\" placeholder=\"re-enter password\"><br></form><button hx-post=\"/signup\" hx-include=\"#form\" hx-target=\"#result\">signup</button><div id=\"result\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

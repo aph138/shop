@@ -1,11 +1,15 @@
 package web
-
+import "github.com/aph138/shop/server/web/layout"
 templ Signin(){
-    <form method="POST" action="/signin">
-        <input type="text" name="username" placeholder="username"/> <br/>
-        <input type="password" name="password" placeholder="password"/><br/>
-        <button type="submit">sign in</button>
-    </form>
-
-    <a href="/signup">Sign Up</a>
+    @layout.Main("Signin"){
+        <form id="form">
+            <input type="text" name="username" placeholder="username"/> <br/>
+            <input type="password" name="password" placeholder="password"/><br/>
+        </form>
+        //TODO check status code
+        <button hx-post="/signin" hx-include="#form" hx-target="#result">sign in</button>
+        <div id="result"></div>
+        <a href="/signup">Sign Up</a>
+    }
+    
 }

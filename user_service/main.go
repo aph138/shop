@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -24,20 +25,18 @@ import (
 )
 
 type UserService struct {
-	logger *slog.Logger
-	db     *mongo.Database
+	logger     *slog.Logger
+	collection *mongo.Collection
 	pb.UnimplementedUserServer
 }
 
 const TIMEOUT = 1500
-const (
-	COLLECTION = "user"
-)
 
 var (
 	//TODO define other errors
 	errWrongPassword = status.Error(codes.Unauthenticated, "wrong username or password")
 	DB_NAME          = os.Getenv("DB_NAME")
+	Collection       = "user"
 )
 
 func main() {
@@ -46,9 +45,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	c := db.Database(DB_NAME).Collection(Collection)
+	if err = createUniqeIndex(c); err != nil {
+		panic(err.Error())
+	}
 	user := &UserService{
-		logger: logger,
-		db:     db.Database(DB_NAME),
+		logger:     logger,
+		collection: c,
 	}
 
 	//TODO:interceptor
@@ -74,7 +77,7 @@ func main() {
 	<-sig
 	logger.Info("Starting User Service Graceful shutdown ...")
 	srv.GracefulStop()
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*2000)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*5000)
 	defer cancel()
 	if err = db.Disconnect(ctx); err != nil {
 		logger.Error(err.Error())
@@ -85,11 +88,11 @@ func main() {
 }
 
 func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.SigninResponse, error) {
-	_ctx, cancel := context.WithTimeout(ctx, time.Millisecond*1000)
+	_ctx, cancel := context.WithTimeout(ctx, time.Millisecond*TIMEOUT)
 	defer cancel()
 	query := bson.M{"username": in.Username}
 	var user shared.User
-	err := u.db.Collection(COLLECTION).FindOne(_ctx, query).Decode(&user)
+	err := u.collection.FindOne(_ctx, query).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, errWrongPassword
@@ -103,13 +106,14 @@ func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.Sig
 	return &pb.SigninResponse{Id: user.ID}, nil
 }
 func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.SigninResponse, error) {
-	//TODO check for repeated email or username
-	_ctx, cancel := context.WithTimeout(ctx, time.Millisecond*1000)
+	_ctx, cancel := context.WithTimeout(ctx, time.Millisecond*TIMEOUT)
 	defer cancel()
+
 	pass, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
 	user := shared.User{
 		Username: in.Username,
 		Email:    in.Email,
@@ -117,14 +121,30 @@ func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.Sig
 		Role:     in.Role,
 		Status:   true,
 	}
-	u.logger.Info(fmt.Sprintf("%v", user))
+
 	data, err := bson.Marshal(user)
 	if err != nil {
+
 		u.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	result, err := u.db.Collection(COLLECTION).InsertOne(_ctx, data)
+	result, err := u.collection.InsertOne(_ctx, data)
 	if err != nil {
+		//check if the username or email is duplicated or not
+		if mongo.IsDuplicateKeyError(err) {
+			if we, ok := err.(mongo.WriteException); ok && len(we.WriteErrors) > 0 {
+				e := we.WriteErrors[0]
+				if strings.Contains(e.Message, "email_1") {
+					return nil, status.Error(codes.InvalidArgument, "duplicated email")
+				} else if strings.Contains(e.Message, "username_1") {
+					return nil, status.Error(codes.InvalidArgument, "duplicated username")
+				} else {
+					return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("duplicated %s", e.Message))
+				}
+			} else {
+				return nil, status.Error(codes.InvalidArgument, "duplicated unkown field")
+			}
+		}
 		u.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -135,7 +155,7 @@ func (u *UserService) UserList(in *pb.Empty, stream pb.User_UserListServer) erro
 	//1 to include, 0 to exclude
 	ctx := context.Background()
 	option := options.Find().SetProjection(bson.M{"username": 1, "email": 1, "role": 1, "status": 1})
-	cursor, err := u.db.Collection(COLLECTION).Find(ctx, bson.D{}, option)
+	cursor, err := u.collection.Find(ctx, bson.D{}, option)
 	if err != nil {
 		u.logger.Error(err.Error())
 		return status.Error(codes.Internal, err.Error())
@@ -159,5 +179,20 @@ func (u *UserService) UserList(in *pb.Empty, stream pb.User_UserListServer) erro
 		}
 	}
 	// var result
+	return nil
+}
+func createUniqeIndex(c *mongo.Collection) error {
+	email := mongo.IndexModel{
+		Keys:    bson.D{primitive.E{Key: "email", Value: 1}},
+		Options: options.Index().SetUnique(true)}
+
+	username := mongo.IndexModel{
+		Keys:    bson.D{primitive.E{Key: "username", Value: 1}},
+		Options: options.Index().SetUnique(true)}
+
+	_, err := c.Indexes().CreateMany(context.TODO(), []mongo.IndexModel{email, username})
+	if err != nil {
+		return err
+	}
 	return nil
 }

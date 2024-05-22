@@ -5,6 +5,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/mail"
+	"strings"
 	"time"
 
 	pb "github.com/aph138/shop/api/user_grpc"
@@ -22,6 +24,10 @@ const (
 	WEEK_IN_SECOND = 60 * 60 * 24 * 7
 	WEEK_IN_MINUTE = 60 * 24 * 7
 	RetryMSG       = "Something went wrong. Please try again later"
+)
+
+var (
+	JWTFile = "jwt.ed"
 )
 
 type userHandler struct {
@@ -64,30 +70,32 @@ func (u *userHandler) SigninPost(c *gin.Context) {
 			switch e.Code() {
 			case codes.Unauthenticated:
 				{
-					http.Error(c.Writer, "wrong password", http.StatusInternalServerError)
+					c.Writer.Write([]byte("Wrong password or username"))
 					return
 				}
 			}
 		}
-
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+		u.logger.Error(err.Error())
+		c.Writer.Write([]byte(RetryMSG))
 		return
 	}
-	i, err := auth.NewIssuer("jwt.ed")
+	i, err := auth.NewIssuer(JWTFile)
 	if err != nil {
 		u.logger.Error(err.Error())
-		http.Error(c.Writer, RetryMSG, http.StatusInternalServerError)
+		c.Writer.Write([]byte(RetryMSG))
 		return
 	}
 	data := map[string]string{"id": res.Id}
 	token, err := i.Token(data, WEEK_IN_MINUTE)
 	if err != nil {
 		u.logger.Error(err.Error())
-		http.Error(c.Writer, RetryMSG, http.StatusInternalServerError)
+		c.Writer.Write([]byte(RetryMSG))
 		return
 	}
+
 	c.SetCookie("jwt", token, WEEK_IN_SECOND, "", "", true, true)
-	c.Redirect(http.StatusFound, "/")
+	c.Writer.Header().Add("HX-Redirect", "/")
+	c.Writer.Flush()
 
 }
 
@@ -99,19 +107,69 @@ func (u *userHandler) SignupPost(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*500)
 	defer cancel()
 	pass := c.Request.FormValue("password")
+	email := c.Request.FormValue("email")
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		c.Writer.Write([]byte("Wrong email"))
+		return
+	}
 	if pass != c.Request.FormValue("confirmPassword") {
+		c.Writer.Write([]byte("Wrong repeated password"))
 		return
 	}
 	req := pb.SignupRequest{
 		Username: c.Request.FormValue("username"),
 		Password: pass,
-		Email:    c.Request.FormValue("email"),
+		Email:    email,
 	}
 	res, err := u.client.Signup(ctx, &req)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			u.logger.Info(e.Message())
+			switch e.Code() {
+			case codes.InvalidArgument:
+				{
+					if strings.Contains(e.Message(), "email") {
+						c.Writer.Write([]byte("repeated email"))
+						return
+					} else if strings.Contains(e.Message(), "username") {
+						c.Writer.Write([]byte("repeated username"))
+						return
+					} else {
+						c.Writer.Write([]byte("invalid input"))
+						return
+					}
+				}
+			default:
+				{
+					u.logger.Error(err.Error())
+					c.Writer.Write([]byte(RetryMSG))
+					return
+				}
+			}
+		}
+
 		u.logger.Error(err.Error())
+		c.Writer.Write([]byte(RetryMSG))
+		return
 	}
-	c.Writer.Write([]byte(res.Id))
+	i, err := auth.NewIssuer(JWTFile)
+	if err != nil {
+		u.logger.Error(err.Error())
+		c.Writer.Write([]byte(RetryMSG))
+		return
+	}
+	data := map[string]string{"id": res.Id}
+	token, err := i.Token(data, WEEK_IN_MINUTE)
+	if err != nil {
+		u.logger.Error(err.Error())
+		c.Writer.Write([]byte(RetryMSG))
+		return
+	}
+
+	c.SetCookie("jwt", token, WEEK_IN_SECOND, "", "", true, true)
+	c.Writer.Header().Add("HX-Redirect", "/")
+	c.Writer.Flush()
 }
 
 func (u *userHandler) AllUserGet(c *gin.Context) {

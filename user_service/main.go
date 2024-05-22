@@ -13,6 +13,7 @@ import (
 
 	pb "github.com/aph138/shop/api/user_grpc"
 	"github.com/aph138/shop/pkg/db"
+	"github.com/aph138/shop/pkg/logger"
 	"github.com/aph138/shop/shared"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -40,8 +41,8 @@ var (
 )
 
 func main() {
-	logger := slog.Default()
-	db, err := db.NewDB(os.Getenv("mongoURL"), logger, nil)
+	l := slog.Default()
+	db, err := db.NewDB(os.Getenv("mongoURL"), l, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -50,12 +51,13 @@ func main() {
 		panic(err.Error())
 	}
 	user := &UserService{
-		logger:     logger,
+		logger:     l,
 		collection: c,
 	}
-
-	//TODO:interceptor
-	opt := []grpc.ServerOption{}
+	grpcLogger := logger.NewLogger(l)
+	opt := []grpc.ServerOption{
+		grpc.UnaryInterceptor(grpcLogger.UnaryServerLogger),
+	}
 	srv := grpc.NewServer(opt...)
 	pb.RegisterUserServer(srv, user)
 
@@ -65,7 +67,7 @@ func main() {
 			panic(err)
 		}
 		defer listener.Close()
-		logger.Info("User Server is running on " + listener.Addr().String())
+		l.Info("User Server is running on " + listener.Addr().String())
 		if err := srv.Serve(listener); err != nil {
 			panic(err)
 		}
@@ -75,15 +77,15 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT)
 	<-sig
-	logger.Info("Starting User Service Graceful shutdown ...")
+	l.Info("Starting User Service Graceful shutdown ...")
 	srv.GracefulStop()
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*5000)
 	defer cancel()
 	if err = db.Disconnect(ctx); err != nil {
-		logger.Error(err.Error())
+		l.Error(err.Error())
 	}
 
-	logger.Info("User Service has been shutted down gracefully")
+	l.Info("User Service has been shutted down gracefully")
 
 }
 

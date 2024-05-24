@@ -1,0 +1,51 @@
+package userview
+
+import "github.com/aph138/shop/shared"
+import "github.com/aph138/shop/server/web/layout"
+import "fmt"
+templ UserList(list []shared.User){
+    @layout.Main("list"){
+        <div id="result"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>username</th>
+                    <th>email</th>
+                    <th>role</th>
+                    <th>status</th>
+                </tr>
+            </thead>
+            <tbody hx-confirm="Are you sure?" hx-target="closest tr" hx-swap="outerHTML swap:1s">
+            for _,u:=range list{
+                <tr>
+                    <td>{u.Username}</td>
+                    <td>{u.Email}</td>
+                    <td>
+                        if u.Role==0{
+                            <div>normal</div>
+                        }else if (u.Role==1){
+                            <div>
+                                admin
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        if u.Status{
+                            <div style="background-color:green">active</div>
+                        }else{
+                            <div style="background-color:red">inactive</div>
+                        }
+                    </td>
+                    <td>
+                        <button 
+                        hx-delete={string(templ.SafeURL(fmt.Sprintf("/admin/delete/%s",u.ID)))}>Delete</button>
+
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+       
+    }
+    
+}

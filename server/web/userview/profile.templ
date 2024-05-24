@@ -1,0 +1,13 @@
+package userview
+
+import "github.com/aph138/shop/server/web/layout"
+
+templ Profile(email string){
+    @layout.Main("Profile"){
+        <div hx-ext="response-targets">
+            <input id="email" name="email" placeholder="email" value={email}/>
+            <button type="button" hx-put="/profile" hx-include="#email" hx-target-4*="#result" hx-target="#result">Edit</button>
+            <div id="result"></div>
+        </div>
+    }
+}

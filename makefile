@@ -1,4 +1,4 @@
-grpc_path = grpc
+grpc_path = api
 grpc_prefix= github.com/aph138/shop
 grpc_files = protos/user.proto protos/shop.proto
 rpc:

@@ -64,7 +64,7 @@ func NewValidator(path string) (*Validator, error) {
 }
 
 func (v *Validator) Validate(tokenString string) (map[string]string, error) {
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &myClaims{}, func(t *jwt.Token) (interface{}, error) {
 		// check if the token use the correct method
 		if _, ok := t.Method.(*jwt.SigningMethodEd25519); !ok {
 			return nil, fmt.Errorf("jwt: wrong signing method")

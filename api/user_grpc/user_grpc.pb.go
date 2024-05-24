@@ -22,9 +22,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserClient interface {
-	Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*SigninResponse, error)
-	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*SigninResponse, error)
+	Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*WithID, error)
+	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*WithID, error)
 	UserList(ctx context.Context, in *Empty, opts ...grpc.CallOption) (User_UserListClient, error)
+	GetUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*GetUserResponse, error)
+	DeleteUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*WithBool, error)
+	EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*WithBool, error)
+	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*WithBool, error)
 }
 
 type userClient struct {
@@ -35,8 +39,8 @@ func NewUserClient(cc grpc.ClientConnInterface) UserClient {
 	return &userClient{cc}
 }
 
-func (c *userClient) Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*SigninResponse, error) {
-	out := new(SigninResponse)
+func (c *userClient) Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*WithID, error) {
+	out := new(WithID)
 	err := c.cc.Invoke(ctx, "/User/Signin", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -44,8 +48,8 @@ func (c *userClient) Signin(ctx context.Context, in *SigninRequest, opts ...grpc
 	return out, nil
 }
 
-func (c *userClient) Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*SigninResponse, error) {
-	out := new(SigninResponse)
+func (c *userClient) Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*WithID, error) {
+	out := new(WithID)
 	err := c.cc.Invoke(ctx, "/User/Signup", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -85,13 +89,53 @@ func (x *userUserListClient) Recv() (*UserListResponse, error) {
 	return m, nil
 }
 
+func (c *userClient) GetUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*GetUserResponse, error) {
+	out := new(GetUserResponse)
+	err := c.cc.Invoke(ctx, "/User/GetUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) DeleteUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*WithBool, error) {
+	out := new(WithBool)
+	err := c.cc.Invoke(ctx, "/User/DeleteUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*WithBool, error) {
+	out := new(WithBool)
+	err := c.cc.Invoke(ctx, "/User/EditUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*WithBool, error) {
+	out := new(WithBool)
+	err := c.cc.Invoke(ctx, "/User/ChangePassword", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
 type UserServer interface {
-	Signin(context.Context, *SigninRequest) (*SigninResponse, error)
-	Signup(context.Context, *SignupRequest) (*SigninResponse, error)
+	Signin(context.Context, *SigninRequest) (*WithID, error)
+	Signup(context.Context, *SignupRequest) (*WithID, error)
 	UserList(*Empty, User_UserListServer) error
+	GetUser(context.Context, *WithID) (*GetUserResponse, error)
+	DeleteUser(context.Context, *WithID) (*WithBool, error)
+	EditUser(context.Context, *EditUserRequest) (*WithBool, error)
+	ChangePassword(context.Context, *ChangePasswordRequest) (*WithBool, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -99,14 +143,26 @@ type UserServer interface {
 type UnimplementedUserServer struct {
 }
 
-func (UnimplementedUserServer) Signin(context.Context, *SigninRequest) (*SigninResponse, error) {
+func (UnimplementedUserServer) Signin(context.Context, *SigninRequest) (*WithID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signin not implemented")
 }
-func (UnimplementedUserServer) Signup(context.Context, *SignupRequest) (*SigninResponse, error) {
+func (UnimplementedUserServer) Signup(context.Context, *SignupRequest) (*WithID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
 }
 func (UnimplementedUserServer) UserList(*Empty, User_UserListServer) error {
 	return status.Errorf(codes.Unimplemented, "method UserList not implemented")
+}
+func (UnimplementedUserServer) GetUser(context.Context, *WithID) (*GetUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServer) DeleteUser(context.Context, *WithID) (*WithBool, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServer) EditUser(context.Context, *EditUserRequest) (*WithBool, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditUser not implemented")
+}
+func (UnimplementedUserServer) ChangePassword(context.Context, *ChangePasswordRequest) (*WithBool, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -178,6 +234,78 @@ func (x *userUserListServer) Send(m *UserListResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WithID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/User/GetUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).GetUser(ctx, req.(*WithID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WithID)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).DeleteUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/User/DeleteUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).DeleteUser(ctx, req.(*WithID))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_EditUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EditUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).EditUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/User/EditUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).EditUser(ctx, req.(*EditUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).ChangePassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/User/ChangePassword",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -192,6 +320,22 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Signup",
 			Handler:    _User_Signup_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _User_GetUser_Handler,
+		},
+		{
+			MethodName: "DeleteUser",
+			Handler:    _User_DeleteUser_Handler,
+		},
+		{
+			MethodName: "EditUser",
+			Handler:    _User_EditUser_Handler,
+		},
+		{
+			MethodName: "ChangePassword",
+			Handler:    _User_ChangePassword_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

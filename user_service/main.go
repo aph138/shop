@@ -31,7 +31,7 @@ type UserService struct {
 	pb.UnimplementedUserServer
 }
 
-const TIMEOUT = 1500
+const TIMEOUT = time.Millisecond * 1500
 
 var (
 	//TODO define other errors
@@ -89,8 +89,8 @@ func main() {
 
 }
 
-func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.SigninResponse, error) {
-	_ctx, cancel := context.WithTimeout(ctx, time.Millisecond*TIMEOUT)
+func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.WithID, error) {
+	_ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
 	query := bson.M{"username": in.Username}
 	var user shared.User
@@ -105,10 +105,10 @@ func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.Sig
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password)); err != nil {
 		return nil, errWrongPassword
 	}
-	return &pb.SigninResponse{Id: user.ID}, nil
+	return &pb.WithID{Id: user.ID}, nil
 }
-func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.SigninResponse, error) {
-	_ctx, cancel := context.WithTimeout(ctx, time.Millisecond*TIMEOUT)
+func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.WithID, error) {
+	_ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
 
 	pass, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
@@ -151,7 +151,7 @@ func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.Sig
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	id := result.InsertedID.(primitive.ObjectID).Hex()
-	return &pb.SigninResponse{Id: id}, nil
+	return &pb.WithID{Id: id}, nil
 }
 func (u *UserService) UserList(in *pb.Empty, stream pb.User_UserListServer) error {
 	//1 to include, 0 to exclude
@@ -182,6 +182,73 @@ func (u *UserService) UserList(in *pb.Empty, stream pb.User_UserListServer) erro
 	}
 	// var result
 	return nil
+}
+func (u *UserService) GetUser(ctx context.Context, in *pb.WithID) (*pb.GetUserResponse, error) {
+	var result shared.User
+
+	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	id, err := primitive.ObjectIDFromHex(in.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+	err = u.collection.FindOne(_ctx, bson.M{"_id": id}).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, status.Error(codes.NotFound, "user not founded")
+		}
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &pb.GetUserResponse{Username: result.Username,
+		Email:  result.Email,
+		Role:   result.Role,
+		Status: result.Status}, nil
+}
+
+func (u *UserService) DeleteUser(ctx context.Context, in *pb.WithID) (*pb.WithBool, error) {
+	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	id, err := primitive.ObjectIDFromHex(in.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+	r, err := u.collection.DeleteOne(_ctx, bson.M{"_id": id})
+	if err != nil {
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if r.DeletedCount >= 1 {
+		return &pb.WithBool{Result: true}, nil
+	} else {
+		return &pb.WithBool{Result: false}, nil
+	}
+
+}
+func (u *UserService) EditUser(ctx context.Context, in *pb.EditUserRequest) (*pb.WithBool, error) {
+	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	id, err := primitive.ObjectIDFromHex(in.Id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+	user := shared.User{
+		Email: in.Email,
+	}
+	result, err := u.collection.UpdateByID(_ctx, id, bson.M{"$set": user})
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, status.Error(codes.AlreadyExists, "duplicated email")
+		}
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	response := &pb.WithBool{}
+	if result.ModifiedCount == 1 {
+		response.Result = true
+	} else {
+		response.Result = false
+	}
+	return response, nil
 }
 func createUniqeIndex(c *mongo.Collection) error {
 	email := mongo.IndexModel{

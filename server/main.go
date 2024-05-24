@@ -30,15 +30,24 @@ func main() {
 	userHandler := handler.NewUserHandler(os.Getenv("USER_SERVICE"), logger)
 	indexHandler := handler.NewIndexHandler(logger)
 
-	h.Use(indexHandler.AuthMiddleware())
+	h.Use(userHandler.AuthMiddleware())
 
 	h.StaticFS("/public", http.Dir("./public"))
 	h.GET("/", indexHandler.IndexGet)
-	h.GET("/signin", userHandler.SigninGet)
-	h.POST("/signin", userHandler.SigninPost)
-	h.GET("/signup", userHandler.SignupGet)
-	h.GET("/list", userHandler.AllUserGet)
-	h.POST("/signup", userHandler.SignupPost)
+	h.GET("/signin", userHandler.GetSignin)
+	h.POST("/signin", userHandler.PostSignin)
+	h.GET("/signup", userHandler.GetSignup)
+	h.POST("/signup", userHandler.PostSignup)
+	h.GET("/profile", userHandler.GetUserProfile)
+	h.GET("/password", userHandler.GetPassword)
+	h.PUT("/profile", userHandler.PutUserProfile)
+	h.PUT("/password", userHandler.PutPassword)
+
+	//restricted functions
+	adminGroupe := h.Group("/admin").Use(handler.AdminMiddleware())
+	adminGroupe.DELETE("/delete/:id", userHandler.DeleteUser)
+	adminGroupe.GET("/list", userHandler.GetAllUser)
+
 	h.GET("/test", func(ctx *gin.Context) {
 		ctx.Writer.Write([]byte(time.Now().String()))
 	})

@@ -2,22 +2,39 @@ syntax = "proto3";
 option go_package = "github.com/aph138/shop/user_grpc";
 
 service User{
-    rpc Signin (SigninRequest) returns (SigninResponse) {}
-    rpc Signup (SignupRequest) returns (SigninResponse) {}
+    rpc Signin (SigninRequest) returns (WithID) {}
+    rpc Signup (SignupRequest) returns (WithID) {}
     rpc UserList(Empty) returns (stream UserListResponse){}
+    rpc GetUser(WithID) returns(GetUserResponse){}
+    rpc DeleteUser(WithID) returns (WithBool){}
+    rpc EditUser(EditUserRequest) returns(WithBool){}
+    rpc ChangePassword(ChangePasswordRequest) returns (WithBool){}
 }
 
-
+message WithID{
+     string id=1;
+}
+message WithBool{
+     bool result=1;
+}
+message ChangePasswordRequest{
+     string id=1;
+     string newPassword=2;
+}
+message EditUserRequest{
+     string id=1;
+     string email=3;
+}
+message GetUserResponse{
+     string username=1;
+     string email=2;
+     uint32 role=3;
+     bool status=4;
+}
 message SigninRequest{
      string username=1;
      string password=2;
 }
-
-
-message SigninResponse{
-     string id=1;
-}
-
 message SignupRequest{
      string username=1;
      string email=2;

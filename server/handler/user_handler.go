@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -11,7 +13,7 @@ import (
 
 	pb "github.com/aph138/shop/api/user_grpc"
 	"github.com/aph138/shop/pkg/auth"
-	"github.com/aph138/shop/server/web"
+	"github.com/aph138/shop/server/web/userview"
 	"github.com/aph138/shop/shared"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -20,10 +22,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// TODO: add address
 const (
 	WEEK_IN_SECOND = 60 * 60 * 24 * 7
 	WEEK_IN_MINUTE = 60 * 24 * 7
 	RetryMSG       = "Something went wrong. Please try again later"
+	GRPC_TIMEOUT   = time.Millisecond * 500
 )
 
 var (
@@ -50,14 +54,16 @@ func NewUserHandler(url string, logger *slog.Logger) *userHandler {
 		conn:   userConn,
 	}
 }
+
 func (u *userHandler) Close() error {
 	return u.conn.Close()
 }
-func (u *userHandler) SigninGet(c *gin.Context) {
-	render(c, web.Signin())
+
+func (u *userHandler) GetSignin(c *gin.Context) {
+	render(c, userview.Signin())
 }
 
-func (u *userHandler) SigninPost(c *gin.Context) {
+func (u *userHandler) PostSignin(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*500)
 	defer cancel()
 	req := &pb.SigninRequest{
@@ -99,11 +105,11 @@ func (u *userHandler) SigninPost(c *gin.Context) {
 
 }
 
-func (u *userHandler) SignupGet(c *gin.Context) {
-	render(c, web.Signup())
+func (u *userHandler) GetSignup(c *gin.Context) {
+	render(c, userview.Signup())
 }
 
-func (u *userHandler) SignupPost(c *gin.Context) {
+func (u *userHandler) PostSignup(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*500)
 	defer cancel()
 	pass := c.Request.FormValue("password")
@@ -127,6 +133,7 @@ func (u *userHandler) SignupPost(c *gin.Context) {
 		if e, ok := status.FromError(err); ok {
 			u.logger.Info(e.Message())
 			switch e.Code() {
+			//TODO: change code to alreadytexists
 			case codes.InvalidArgument:
 				{
 					if strings.Contains(e.Message(), "email") {
@@ -172,7 +179,7 @@ func (u *userHandler) SignupPost(c *gin.Context) {
 	c.Writer.Flush()
 }
 
-func (u *userHandler) AllUserGet(c *gin.Context) {
+func (u *userHandler) GetAllUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*500)
 	defer cancel()
 	list := &pb.Empty{}
@@ -199,5 +206,186 @@ func (u *userHandler) AllUserGet(c *gin.Context) {
 		}
 		userList = append(userList, u)
 	}
-	c.JSON(200, userList)
+	render(c, userview.UserList(userList))
+}
+
+type ctxKey string
+
+var ctxUserInfo ctxKey = ctxKey("userInfo")
+
+func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		v, err := auth.NewValidator("jwt.ed.pub")
+		if err != nil {
+			u.logger.Error(err.Error())
+			http.Error(c.Writer, RetryMSG, http.StatusInternalServerError)
+			return
+		}
+		token, err := c.Request.Cookie("jwt")
+		if err != nil {
+			if err == http.ErrNoCookie {
+				c.Next()
+				return
+			}
+			u.logger.Error(err.Error())
+			http.Error(c.Writer, RetryMSG, http.StatusInternalServerError)
+			return
+		}
+		if token.Value == "" {
+			c.Next()
+			return
+		}
+		data, err := v.Validate(token.Value)
+		if err != nil {
+			u.logger.Error(err.Error())
+			c.Next()
+			return
+		}
+		/*
+			Note: this approach is not optimized; instead we should save id and
+			username in the context, and whenever the user requests for a restricted
+			function, check for user's privilages in database. But in this app I want
+			use reddis and here is a good opportunity.
+		*/
+		//TODO: use reddis for caching
+		res, err := u.client.GetUser(context.TODO(), &pb.WithID{Id: data["id"]})
+		if err != nil {
+			u.logger.Error(err.Error())
+			c.Next()
+			return
+		}
+		u := shared.User{
+			ID:       data["id"],
+			Username: res.Username,
+			Email:    res.Email,
+			Role:     res.Role,
+			Status:   res.Status,
+		}
+		ctx := context.WithValue(c.Request.Context(), ctxUserInfo, u)
+		r := c.Request.WithContext(ctx)
+		c.Request = r
+		c.Next()
+
+	}
+}
+func (u *userHandler) DeleteUser(c *gin.Context) {
+	u.logger.Info(c.Param("id"))
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+	res, err := u.client.DeleteUser(ctx, &pb.WithID{Id: c.Param("id")})
+	if err != nil {
+		u.logger.Error(err.Error())
+		c.Writer.Write([]byte(RetryMSG))
+		return
+	}
+	u.logger.Info(fmt.Sprintf("%t", res.Result))
+	if res.Result {
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.Flush()
+	} else {
+		c.Writer.WriteHeader(http.StatusInternalServerError)
+		c.Writer.Flush()
+	}
+}
+func (u *userHandler) GetUserProfile(c *gin.Context) {
+	render(c, userview.Profile(getUserCtx(c).Email))
+}
+func (u *userHandler) PutUserProfile(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+	e := c.Request.FormValue("email")
+	_, err := mail.ParseAddress(e)
+	if err != nil {
+		c.String(http.StatusBadRequest, "wrong email")
+		return
+	}
+
+	res, err := u.client.EditUser(ctx, &pb.EditUserRequest{Id: getUserCtx(c).ID, Email: e})
+	if err != nil {
+		if s, ok := status.FromError(err); ok {
+			switch s.Code() {
+			case codes.AlreadyExists:
+				{
+					c.String(http.StatusBadRequest, "email already exists")
+					return
+				}
+			case codes.InvalidArgument:
+				{
+					c.String(http.StatusBadRequest, "wrong id")
+					return
+				}
+			default:
+				{
+					u.logger.Error(err.Error())
+					c.JSON(http.StatusInternalServerError, RetryMSG)
+					return
+				}
+			}
+		}
+		u.logger.Error(err.Error())
+		c.JSON(http.StatusInternalServerError, RetryMSG)
+		return
+	}
+	if res.Result {
+		c.String(http.StatusOK, "updated")
+		return
+	} else {
+		c.String(http.StatusOK, "not updated.try again later")
+		return
+	}
+
+}
+func (u *userHandler) GetPassword(c *gin.Context) {
+	render(c, userview.Password())
+}
+func (u *userHandler) PutPassword(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+
+	user := getUserCtx(c)
+	oldPass := ""
+	newPass := ""
+	confirmPass := ""
+	if newPass != confirmPass {
+		c.String(http.StatusBadRequest, "re-enter passwrd")
+		return
+	}
+	signinResult, err := u.client.Signin(ctx, &pb.SigninRequest{Username: user.Username, Password: oldPass})
+	if err != nil {
+
+	}
+	if signinResult.Id != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+		defer cancel()
+		res, err := u.client.ChangePassword(ctx, &pb.ChangePasswordRequest{Id: user.ID, NewPassword: ""})
+		if err != nil {
+			return
+		}
+		if res.Result {
+
+		} else {
+
+		}
+
+	}
+
+}
+
+func getUserCtx(c *gin.Context) *shared.User {
+	u, ok := c.Request.Context().Value(ctxUserInfo).(shared.User)
+	if !ok {
+		return &shared.User{}
+	}
+	return &u
+}
+func AdminMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		log.Println("ROOOLEEE", getUserCtx(ctx).Role)
+		if getUserCtx(ctx).Role > 0 {
+			ctx.Next()
+		} else {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "not allowed"})
+			return
+		}
+	}
 }

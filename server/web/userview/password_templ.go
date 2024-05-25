@@ -31,7 +31,7 @@ func Password() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("change password")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div hx-ext=\"response-targets\"><form id=\"form\"><input type=\"password\" name=\"oldPassword\" placeholder=\"Old Password\"><br><input type=\"password\" name=\"newPassword\" placeholder=\"New Password\"><br><input type=\"password\" name=\"confirmPassword\" placeholder=\"Confirm Password\"><br></form><button type=\"button\" hx-put=\"/password\" hx-include=\"#form\" hx-target-4*=\"#result\" hx-target=\"#result\">Change</button><div id=\"result\"></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

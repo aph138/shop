@@ -19,7 +19,8 @@ message WithBool{
 }
 message ChangePasswordRequest{
      string id=1;
-     string newPassword=2;
+     string oldPassword=2;
+     string newPassword=3;
 }
 message EditUserRequest{
      string id=1;

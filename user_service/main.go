@@ -250,6 +250,43 @@ func (u *UserService) EditUser(ctx context.Context, in *pb.EditUserRequest) (*pb
 	}
 	return response, nil
 }
+func (u *UserService) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*pb.WithBool, error) {
+	var result bool
+	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	id, err := primitive.ObjectIDFromHex(in.Id)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+	var user shared.User
+	opt := options.FindOne().SetProjection(bson.M{"password": 1})
+	err = u.collection.FindOne(_ctx, bson.M{"_id": id}, opt).Decode(&user)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.OldPassword)); err != nil {
+		return nil, status.Error(codes.Unauthenticated, "wrong password")
+	}
+	_ctx, cancel = context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	newPassword, err := bcrypt.GenerateFromPassword([]byte(in.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "bad new password")
+	}
+	newUser := shared.User{Password: string(newPassword)}
+	r, err := u.collection.UpdateByID(_ctx, id, bson.M{"$set": newUser})
+	if err != nil {
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if r.ModifiedCount >= 1 {
+		result = true
+	}
+	return &pb.WithBool{Result: result}, nil
+
+}
 func createUniqeIndex(c *mongo.Collection) error {
 	email := mongo.IndexModel{
 		Keys:    bson.D{primitive.E{Key: "email", Value: 1}},

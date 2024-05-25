@@ -342,31 +342,43 @@ func (u *userHandler) PutPassword(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
 	defer cancel()
 
-	user := getUserCtx(c)
-	oldPass := ""
-	newPass := ""
-	confirmPass := ""
+	oldPass := c.Request.FormValue("oldPassword")
+	newPass := c.Request.FormValue("newPassword")
+	confirmPass := c.Request.FormValue("confirmPassword")
 	if newPass != confirmPass {
 		c.String(http.StatusBadRequest, "re-enter passwrd")
 		return
 	}
-	signinResult, err := u.client.Signin(ctx, &pb.SigninRequest{Username: user.Username, Password: oldPass})
+	req := &pb.ChangePasswordRequest{Id: getUserCtx(c).ID, OldPassword: oldPass, NewPassword: newPass}
+	signinResult, err := u.client.ChangePassword(ctx, req)
 	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			switch e.Code() {
+			case codes.Unauthenticated:
+				{
+					c.String(http.StatusBadRequest, "wrong password")
+				}
+			case codes.InvalidArgument:
+				{
+					c.String(http.StatusBadRequest, "bad new password")
+				}
+			default:
+				{
+					c.String(http.StatusInternalServerError, RetryMSG)
+				}
 
-	}
-	if signinResult.Id != "" {
-		ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
-		defer cancel()
-		res, err := u.client.ChangePassword(ctx, &pb.ChangePasswordRequest{Id: user.ID, NewPassword: ""})
-		if err != nil {
+			}
 			return
 		}
-		if res.Result {
-
-		} else {
-
-		}
-
+		c.String(http.StatusInternalServerError, RetryMSG)
+		return
+	}
+	if signinResult.Result {
+		c.String(http.StatusOK, "password has changed")
+		return
+	} else {
+		c.String(http.StatusOK, "password hasn't changed. something went wrong.")
+		return
 	}
 
 }

@@ -1,12 +1,17 @@
 package userview
 
 import "github.com/aph138/shop/server/web/layout"
+import "github.com/aph138/shop/shared"
 
-templ Profile(email string){
+templ Profile(user shared.User){
     @layout.Main("Profile"){
         <div hx-ext="response-targets">
-            <input id="email" name="email" placeholder="email" value={email}/>
-            <button type="button" hx-put="/profile" hx-include="#email" hx-target-4*="#result" hx-target="#result">Edit</button>
+            <form id="form">
+                <input name="email" placeholder="email" value={user.Email}/>
+                <input name="address" placeholder="address" value={user.Address.Address}/>
+                <input name="phone" placeholder="phone" value={user.Address.Phone}/>
+            </form>
+            <button type="button" hx-put="/profile" hx-include="#form" hx-target-4*="#result" hx-target="#result">Edit</button>
             <div id="result"></div>
         </div>
     }

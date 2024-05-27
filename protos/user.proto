@@ -22,15 +22,21 @@ message ChangePasswordRequest{
      string oldPassword=2;
      string newPassword=3;
 }
+message Address{
+     string address=1;
+     string phone=2;
+}
 message EditUserRequest{
      string id=1;
-     string email=3;
+     string email=2;
+     Address address=3;
 }
 message GetUserResponse{
      string username=1;
      string email=2;
      uint32 role=3;
      bool status=4;
+     Address address=5;
 }
 message SigninRequest{
      string username=1;
@@ -40,7 +46,7 @@ message SignupRequest{
      string username=1;
      string email=2;
      string password=3;
-     uint32 role=4;   
+     uint32 role=5;
 }
 
 message UserListResponse{

@@ -260,6 +260,10 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 			Email:    res.Email,
 			Role:     res.Role,
 			Status:   res.Status,
+			Address: shared.Address{
+				Address: res.Address.Address,
+				Phone:   res.Address.Phone,
+			},
 		}
 		ctx := context.WithValue(c.Request.Context(), ctxUserInfo, u)
 		r := c.Request.WithContext(ctx)
@@ -288,19 +292,22 @@ func (u *userHandler) DeleteUser(c *gin.Context) {
 	}
 }
 func (u *userHandler) GetUserProfile(c *gin.Context) {
-	render(c, userview.Profile(getUserCtx(c).Email))
+	render(c, userview.Profile(*getUserCtx(c)))
 }
 func (u *userHandler) PutUserProfile(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
 	defer cancel()
 	e := c.Request.FormValue("email")
+	address := c.Request.FormValue("address")
+	phone := c.Request.FormValue("phone")
+	//TODO: validate phone number
 	_, err := mail.ParseAddress(e)
 	if err != nil {
 		c.String(http.StatusBadRequest, "wrong email")
 		return
 	}
-
-	res, err := u.client.EditUser(ctx, &pb.EditUserRequest{Id: getUserCtx(c).ID, Email: e})
+	add := &pb.Address{Address: address, Phone: phone}
+	res, err := u.client.EditUser(ctx, &pb.EditUserRequest{Id: getUserCtx(c).ID, Email: e, Address: add})
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			switch s.Code() {

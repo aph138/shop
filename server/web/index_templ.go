@@ -46,7 +46,7 @@ func Index(u shared.User) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><button hx-get=\"/test\" hx-target=\"#result\" hx-trigger=\"click\">GET time for test</button><br><a href=\"/profile\"><button>Edit profile</button><br></a> <a href=\"/password\"><button>Change password</button><br></a><div id=\"result\"></div>")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><button hx-get=\"/test\" hx-target=\"#result\" hx-trigger=\"click\">GET time for test</button><br><a href=\"/profile\"><button>Edit profile</button><br></a> <a href=\"/password\"><button>Change password</button><br></a> <button>Log out</button><div id=\"result\"></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

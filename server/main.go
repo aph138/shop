@@ -16,6 +16,13 @@ import (
 // //go:embed public
 // var public embed.FS
 
+/*
+TODO:
+1. improve ui
+2. add redis
+3. add address and phone field
+4. refine code
+*/
 var (
 	logger *slog.Logger
 )

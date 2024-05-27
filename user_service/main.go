@@ -34,7 +34,6 @@ type UserService struct {
 const TIMEOUT = time.Millisecond * 1500
 
 var (
-	//TODO define other errors
 	errWrongPassword = status.Error(codes.Unauthenticated, "wrong username or password")
 	DB_NAME          = os.Getenv("DB_NAME")
 	Collection       = "user"
@@ -107,6 +106,7 @@ func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.Wit
 	}
 	return &pb.WithID{Id: user.ID}, nil
 }
+
 func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.WithID, error) {
 	_ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
@@ -202,7 +202,11 @@ func (u *UserService) GetUser(ctx context.Context, in *pb.WithID) (*pb.GetUserRe
 	return &pb.GetUserResponse{Username: result.Username,
 		Email:  result.Email,
 		Role:   result.Role,
-		Status: result.Status}, nil
+		Status: result.Status,
+		Address: &pb.Address{
+			Address: result.Address.Address,
+			Phone:   result.Address.Phone},
+	}, nil
 }
 
 func (u *UserService) DeleteUser(ctx context.Context, in *pb.WithID) (*pb.WithBool, error) {
@@ -233,6 +237,10 @@ func (u *UserService) EditUser(ctx context.Context, in *pb.EditUserRequest) (*pb
 	}
 	user := shared.User{
 		Email: in.Email,
+		Address: shared.Address{
+			Address: in.Address.Address,
+			Phone:   in.Address.Phone,
+		},
 	}
 	result, err := u.collection.UpdateByID(_ctx, id, bson.M{"$set": user})
 	if err != nil {

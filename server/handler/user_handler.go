@@ -8,14 +8,17 @@ import (
 	"log/slog"
 	"net/http"
 	"net/mail"
+	"os"
 	"strings"
 	"time"
 
 	pb "github.com/aph138/shop/api/user_grpc"
 	"github.com/aph138/shop/pkg/auth"
+	"github.com/aph138/shop/pkg/myredis"
 	"github.com/aph138/shop/server/web/userview"
 	"github.com/aph138/shop/shared"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -247,25 +250,51 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 			function, check for user's privilages in database. But in this app I want
 			use reddis and here is a good opportunity.
 		*/
-		//TODO: use reddis for caching
-		res, err := u.client.GetUser(context.TODO(), &pb.WithID{Id: data["id"]})
+		t := time.Now()
+		id := data["id"]
+		var user shared.User
+
+		rdb, err := myredis.NewRedis(&redis.Options{
+			Addr:     os.Getenv("REDIS_ADDRESS"),
+			Password: "",
+			DB:       0,
+		})
 		if err != nil {
+			//TODO: do something? retry? get data directly from db?
 			u.logger.Error(err.Error())
-			c.Next()
-			return
 		}
-		u := shared.User{
-			ID:       data["id"],
-			Username: res.Username,
-			Email:    res.Email,
-			Role:     res.Role,
-			Status:   res.Status,
-			Address: shared.Address{
-				Address: res.Address.Address,
-				Phone:   res.Address.Phone,
-			},
+		err = rdb.Get(id, &user)
+		if err != nil {
+			if err == redis.Nil {
+				log.Println("Get from db")
+				res, err := u.client.GetUser(context.TODO(), &pb.WithID{Id: id})
+				if err != nil {
+					u.logger.Error(err.Error())
+					c.Next()
+					return
+				}
+				user = shared.User{
+					ID:       data["id"],
+					Username: res.Username,
+					Email:    res.Email,
+					Role:     res.Role,
+					Status:   res.Status,
+					Address: shared.Address{
+						Address: res.Address.Address,
+						Phone:   res.Address.Phone,
+					},
+				}
+				err = rdb.Set(id, user)
+				if err != nil {
+					u.logger.Error(err.Error())
+				}
+			} else {
+				u.logger.Error(err.Error())
+			}
 		}
-		ctx := context.WithValue(c.Request.Context(), ctxUserInfo, u)
+		s := time.Since(t)
+		log.Printf("TOOK: %s", s.String())
+		ctx := context.WithValue(c.Request.Context(), ctxUserInfo, user)
 		r := c.Request.WithContext(ctx)
 		c.Request = r
 		c.Next()

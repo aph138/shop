@@ -8,6 +8,10 @@ rpc:
 docker:
 	templ generate
 	docker compose up --build
-
 temp:
-	templ generate
+	templ generate --watch
+css:
+	npx tailwind -i ./server/web/css/main.css -o ./server/public/css/tailwind.css --watch
+
+run: temp css
+

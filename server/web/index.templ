@@ -5,7 +5,7 @@ import "github.com/aph138/shop/shared"
 templ Index(u shared.User){
     @layout.Main("Index"){
         if u.ID!=""{
-            <div>Hello {u.Username}</div>
+            <div>Helloo {u.Username}</div>
             <button hx-get="/test" hx-target="#result" hx-trigger="click">GET time for test</button><br/>
             <a href="/profile"><button >Edit profile</button><br/></a>
             <a href="/password"><button >Change password</button><br/></a>

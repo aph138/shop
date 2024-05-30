@@ -19,7 +19,6 @@ import (
 /*
 TODO:
 1. improve ui
-2. add redis
 4. refine code
 */
 var (

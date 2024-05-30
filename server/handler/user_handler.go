@@ -218,6 +218,10 @@ var ctxUserInfo ctxKey = ctxKey("userInfo")
 
 func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		//exclude public path from middleware
+		if strings.Split(c.Request.URL.Path, "/")[1] == "public" {
+			return
+		}
 		v, err := auth.NewValidator("jwt.ed.pub")
 		if err != nil {
 			u.logger.Error(err.Error())

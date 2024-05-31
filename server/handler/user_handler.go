@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/mail"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -323,10 +324,16 @@ func (u *userHandler) PutUserProfile(c *gin.Context) {
 	email := c.Request.FormValue("email")
 	address := c.Request.FormValue("address")
 	phone := c.Request.FormValue("phone")
-	//TODO: validate phone number
+	//^(0|\+98)? -> optional start with 0 or +98
+	//(9\d{9})$ -> required 10 digit string that starts with 9
+	reg := regexp.MustCompile(`^(0|\+98)?(9\d{9})$`)
+	if !reg.MatchString(phone) {
+		c.String(http.StatusBadRequest, "invalid phone number")
+		return
+	}
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		c.String(http.StatusBadRequest, "wrong email")
+		c.String(http.StatusBadRequest, "invalid email")
 		return
 	}
 	user := getUserCtx(c)

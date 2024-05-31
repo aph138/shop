@@ -132,14 +132,14 @@ func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.Wit
 			if we, ok := err.(mongo.WriteException); ok && len(we.WriteErrors) > 0 {
 				e := we.WriteErrors[0]
 				if strings.Contains(e.Message, "email_1") {
-					return nil, status.Error(codes.InvalidArgument, "duplicated email")
+					return nil, status.Error(codes.AlreadyExists, "duplicated email")
 				} else if strings.Contains(e.Message, "username_1") {
-					return nil, status.Error(codes.InvalidArgument, "duplicated username")
+					return nil, status.Error(codes.AlreadyExists, "duplicated username")
 				} else {
-					return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("duplicated %s", e.Message))
+					return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("duplicated %s", e.Message))
 				}
 			} else {
-				return nil, status.Error(codes.InvalidArgument, "duplicated unkown field")
+				return nil, status.Error(codes.AlreadyExists, "duplicated unkown field")
 			}
 		}
 		u.logger.Error(err.Error())

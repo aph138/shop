@@ -2,9 +2,7 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -90,26 +88,26 @@ func (u *userHandler) PostSignin(c *gin.Context) {
 			switch e.Code() {
 			case codes.Unauthenticated:
 				{
-					c.Writer.Write([]byte("Wrong password or username"))
-					return
+					c.String(http.StatusBadRequest, "Wrong password or username")
 				}
 			}
+			return
 		}
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 	i, err := auth.NewIssuer(JWTFile)
 	if err != nil {
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 	data := map[string]string{"id": res.Id}
 	token, err := i.Token(data, WEEK_IN_MINUTE)
 	if err != nil {
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 
@@ -130,11 +128,11 @@ func (u *userHandler) PostSignup(c *gin.Context) {
 	email := c.Request.FormValue("email")
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		c.Writer.Write([]byte("Wrong email"))
+		c.String(http.StatusInternalServerError, "invalid email")
 		return
 	}
 	if pass != c.Request.FormValue("confirmPassword") {
-		c.Writer.Write([]byte("Wrong repeated password"))
+		c.String(http.StatusBadRequest, "passwords don't match")
 		return
 	}
 	req := pb.SignupRequest{
@@ -146,46 +144,41 @@ func (u *userHandler) PostSignup(c *gin.Context) {
 	res, err := u.client.Signup(ctx, &req)
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
-			u.logger.Info(e.Message())
 			switch e.Code() {
-			//TODO: change code to alreadytexists
-			case codes.InvalidArgument:
+			case codes.AlreadyExists:
 				{
 					if strings.Contains(e.Message(), "email") {
-						c.Writer.Write([]byte("repeated email"))
-						return
+						c.String(http.StatusBadRequest, "this email already exists")
 					} else if strings.Contains(e.Message(), "username") {
-						c.Writer.Write([]byte("repeated username"))
-						return
+						c.String(http.StatusInternalServerError, "this username already exists")
 					} else {
-						c.Writer.Write([]byte("invalid input"))
-						return
+						c.String(http.StatusBadRequest, "invalid input")
 					}
 				}
 			default:
 				{
 					u.logger.Error(err.Error())
-					c.Writer.Write([]byte(RetryMSG))
-					return
+					c.String(http.StatusInternalServerError, RetryMSG)
 				}
 			}
+			return
 		}
 
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 	i, err := auth.NewIssuer(JWTFile)
 	if err != nil {
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 	data := map[string]string{"id": res.Id}
 	token, err := i.Token(data, WEEK_IN_MINUTE)
 	if err != nil {
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 
@@ -200,7 +193,9 @@ func (u *userHandler) GetAllUser(c *gin.Context) {
 	list := &pb.Empty{}
 	stream, err := u.client.UserList(ctx, list)
 	if err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+		u.logger.Error(err.Error())
+		http.Error(c.Writer, RetryMSG, http.StatusInternalServerError)
+		return
 	}
 	userList := []shared.User{}
 	for {
@@ -210,7 +205,7 @@ func (u *userHandler) GetAllUser(c *gin.Context) {
 		}
 		if err != nil {
 			u.logger.Error(err.Error())
-			http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+			http.Error(c.Writer, RetryMSG, http.StatusInternalServerError)
 		}
 		u := shared.User{
 			ID:       user.Id,
@@ -266,14 +261,12 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 			function, check for user's privilages in database. But in this app I want
 			use reddis and here is a good opportunity.
 		*/
-		t := time.Now()
 		id := data["id"]
 		var user shared.User
 
 		err = u.rdb.Get(id, &user)
 		if err != nil {
 			if err == redis.Nil {
-				log.Println("Get from db")
 				res, err := u.client.GetUser(context.TODO(), &pb.WithID{Id: id})
 				if err != nil {
 					u.logger.Error(err.Error())
@@ -299,33 +292,27 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 				u.logger.Error(err.Error())
 			}
 		}
-		s := time.Since(t)
-		log.Printf("TOOK: %s", s.String())
 		ctx := context.WithValue(c.Request.Context(), ctxUserInfo, user)
-		r := c.Request.WithContext(ctx)
-		c.Request = r
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 
 	}
 }
 func (u *userHandler) DeleteUser(c *gin.Context) {
-	u.logger.Info(c.Param("id"))
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
 	defer cancel()
 	res, err := u.client.DeleteUser(ctx, &pb.WithID{Id: c.Param("id")})
 	if err != nil {
 		u.logger.Error(err.Error())
-		c.Writer.Write([]byte(RetryMSG))
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	u.logger.Info(fmt.Sprintf("%t", res.Result))
 	if res.Result {
 		c.Writer.WriteHeader(http.StatusOK)
-		c.Writer.Flush()
 	} else {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
-		c.Writer.Flush()
 	}
+	c.Writer.Flush()
 }
 func (u *userHandler) GetUserProfile(c *gin.Context) {
 	render(c, userview.Profile(*getUserCtx(c)))
@@ -351,23 +338,21 @@ func (u *userHandler) PutUserProfile(c *gin.Context) {
 			case codes.AlreadyExists:
 				{
 					c.String(http.StatusBadRequest, "email already exists")
-					return
 				}
 			case codes.InvalidArgument:
 				{
-					c.String(http.StatusBadRequest, "wrong id")
-					return
+					c.String(http.StatusBadRequest, "invalid id")
 				}
 			default:
 				{
 					u.logger.Error(err.Error())
-					c.JSON(http.StatusInternalServerError, RetryMSG)
-					return
+					c.String(http.StatusInternalServerError, RetryMSG)
 				}
 			}
+			return
 		}
 		u.logger.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, RetryMSG)
+		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
 	if res.Result {
@@ -378,7 +363,7 @@ func (u *userHandler) PutUserProfile(c *gin.Context) {
 		c.String(http.StatusOK, "updated")
 		return
 	} else {
-		c.String(http.StatusOK, "not updated.try again later")
+		c.String(http.StatusOK, "not updated")
 		return
 	}
 
@@ -394,7 +379,7 @@ func (u *userHandler) PutPassword(c *gin.Context) {
 	newPass := c.Request.FormValue("newPassword")
 	confirmPass := c.Request.FormValue("confirmPassword")
 	if newPass != confirmPass {
-		c.String(http.StatusBadRequest, "re-enter passwrd")
+		c.String(http.StatusBadRequest, "passwords don't match")
 		return
 	}
 	req := &pb.ChangePasswordRequest{Id: getUserCtx(c).ID, OldPassword: oldPass, NewPassword: newPass}
@@ -408,7 +393,7 @@ func (u *userHandler) PutPassword(c *gin.Context) {
 				}
 			case codes.InvalidArgument:
 				{
-					c.String(http.StatusBadRequest, "bad new password")
+					c.String(http.StatusBadRequest, "invalid password")
 				}
 			default:
 				{
@@ -423,10 +408,8 @@ func (u *userHandler) PutPassword(c *gin.Context) {
 	}
 	if signinResult.Result {
 		c.String(http.StatusOK, "password has changed")
-		return
 	} else {
 		c.String(http.StatusOK, "password hasn't changed. something went wrong.")
-		return
 	}
 
 }

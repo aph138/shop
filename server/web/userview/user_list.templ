@@ -5,39 +5,42 @@ import "github.com/aph138/shop/server/web/layout"
 import "fmt"
 templ UserList(list []shared.User){
     @layout.Main("list"){
-        <div id="result"></div>
-        <table>
+        <div class="container mx-auto my-10">
+        <div id="result" class="text-black-500"></div>
+        <div id="error" class="text-red-500"></div>
+        <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-gray-200">
             <thead>
-                <tr>
-                    <th>username</th>
-                    <th>email</th>
-                    <th>role</th>
-                    <th>status</th>
+                <tr class="bg-gray-100 border-b">
+                    <th class="text-left p-3">Username</th>
+                    <th class="text-left p-3">Email</th>
+                    <th class="text-left p-3">Role</th>
+                    <th class="text-left p-3">Status</th>
+                    <th class="text-left p-3">Action</th>
                 </tr>
             </thead>
-            <tbody hx-confirm="Are you sure?" hx-target="closest tr" hx-swap="outerHTML swap:1s">
+            <tbody hx-ext="response-targets" hx-confirm="Are you sure?" hx-target="closest tr" hx-swap="outerHTML swap:1s">
             for _,u:=range list{
-                <tr>
-                    <td>{u.Username}</td>
-                    <td>{u.Email}</td>
-                    <td>
+                <tr class="border-b hover:bg-gray-200">
+                    <td class="p-3">{u.Username}</td>
+                    <td class="p-3">{u.Email}</td>
+                    <td class="p-3">
                         if u.Role==0{
-                            <div>normal</div>
+                            <div class="text-black-500">Normal</div>
                         }else if (u.Role==1){
-                            <div>
-                                admin
-                            </div>
+                            <div class="text-black-500">Admin</div>
                         }
                     </td>
-                    <td>
                         if u.Status{
-                            <div style="background-color:green">active</div>
+                            <td class="p-3 bg-green-500">enable</td>
                         }else{
-                            <div style="background-color:red">inactive</div>
+                            <td class=" p-3bg-red-500">disable</td>
                         }
-                    </td>
-                    <td>
-                        <button 
+                    <!--TODO: fix delete user row bug-->
+                    <td class="p-3">
+                        <button
+                        class="text-red-500 hover:text-red-700"
+                        hx-target-4*="#error" 
                         hx-delete={string(templ.SafeURL(fmt.Sprintf("/admin/delete/%s",u.ID)))}>Delete</button>
 
                     </td>
@@ -45,6 +48,8 @@ templ UserList(list []shared.User){
             }
             </tbody>
         </table>
+        </div>
+        </div>
        
     }
     

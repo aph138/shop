@@ -10,7 +10,7 @@ import (
 
 const DAY = time.Hour * 24
 
-type myRedis struct {
+type MyRedis struct {
 	client  *redis.Client
 	options *opt
 }
@@ -30,7 +30,7 @@ func WithTimeOut(t time.Duration) optFunc {
 		o.timeOut = t
 	}
 }
-func NewRedis(opt *redis.Options, opts ...optFunc) (*myRedis, error) {
+func NewRedis(opt *redis.Options, opts ...optFunc) (*MyRedis, error) {
 	option := defaultOption()
 	for _, o := range opts {
 		o(option)
@@ -41,13 +41,13 @@ func NewRedis(opt *redis.Options, opts ...optFunc) (*myRedis, error) {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return nil, err
 	}
-	return &myRedis{
+	return &MyRedis{
 		client:  rdb,
 		options: option,
 	}, nil
 }
 
-func (r *myRedis) Set(key string, value any, expiration ...time.Duration) error {
+func (r *MyRedis) Set(key string, value any, expiration ...time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.options.timeOut)
 	defer cancel()
 	v, err := json.Marshal(value)
@@ -63,7 +63,7 @@ func (r *myRedis) Set(key string, value any, expiration ...time.Duration) error 
 	}
 	return nil
 }
-func (r *myRedis) Get(key string, value any) error {
+func (r *MyRedis) Get(key string, value any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), r.options.timeOut)
 	defer cancel()
 	result, err := r.client.Get(ctx, key).Result()

@@ -5,14 +5,30 @@ import "github.com/aph138/shop/shared"
 
 templ Profile(user shared.User){
     @layout.Main("Profile"){
-        <div hx-ext="response-targets">
-            <form id="form">
-                <input name="email" placeholder="email" value={user.Email}/>
-                <input name="address" placeholder="address" value={user.Address.Address}/>
-                <input name="phone" placeholder="phone" value={user.Address.Phone}/>
+        <div hx-ext="response-targets" class="bg-gray-100 flex justify-center min-h-screen">
+            <form id="form" class="pt-6 flex flex-col items-center">
+                <div class="mb-4">
+                    <label for="email" class="text-black-500 block text-sm mb-2">Email</label>
+                    <input id="email" name="email" placeholder="email" value={user.Email}
+                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight"/>
+                </div>
+                <div class="mb-4">
+                 <label for="address" class="text-black-500 block text-sm mb-2">Address</label>
+                 <input id="address" name="address" placeholder="address" value={user.Address.Address}
+                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight"/>
+                </div>
+                <div class="mb-4">
+                <label for="phone" class="text-black-500 block text-sm mb-2">Phone</label>
+                 <input id="phone" name="phone" placeholder="phone" value={user.Address.Phone}
+                 class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight"/>
+                </div>
+
+                <div id="result"></div>
+                <button class="bg-blue-500 hover:bg-blue-700 rounded w-full"
+                type="button" hx-put="/profile" hx-include="#form" hx-target-4*="#result" hx-target="#result">Edit</button>
             </form>
-            <button type="button" hx-put="/profile" hx-include="#form" hx-target-4*="#result" hx-target="#result">Edit</button>
-            <div id="result"></div>
+            
+            
         </div>
     }
 }

@@ -46,7 +46,7 @@ message SignupRequest{
      string username=1;
      string email=2;
      string password=3;
-     uint32 role=5;
+     uint32 role=4;
 }
 
 message UserListResponse{

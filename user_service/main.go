@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"log/slog"
 	"net"
 	"os"
@@ -123,14 +124,8 @@ func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.Wit
 		Role:     in.Role,
 		Status:   true,
 	}
-
-	data, err := bson.Marshal(user)
-	if err != nil {
-
-		u.logger.Error(err.Error())
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	result, err := u.collection.InsertOne(_ctx, data)
+	log.Println(user)
+	result, err := u.collection.InsertOne(_ctx, user)
 	if err != nil {
 		//check if the username or email is duplicated or not
 		if mongo.IsDuplicateKeyError(err) {
@@ -283,8 +278,7 @@ func (u *UserService) ChangePassword(ctx context.Context, in *pb.ChangePasswordR
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "bad new password")
 	}
-	newUser := shared.User{Password: string(newPassword)}
-	r, err := u.collection.UpdateByID(_ctx, id, bson.M{"$set": newUser})
+	r, err := u.collection.UpdateByID(_ctx, id, bson.M{"$set": bson.M{"password": string(newPassword)}})
 	if err != nil {
 		u.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())

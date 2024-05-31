@@ -41,6 +41,7 @@ type userHandler struct {
 	client pb.UserClient
 	logger *slog.Logger
 	conn   *grpc.ClientConn
+	rdb    *myredis.MyRedis
 }
 
 func NewUserHandler(url string, logger *slog.Logger) *userHandler {
@@ -51,10 +52,20 @@ func NewUserHandler(url string, logger *slog.Logger) *userHandler {
 	if err != nil {
 		logger.Error(err.Error())
 	}
+	rdb, err := myredis.NewRedis(&redis.Options{
+		Addr:     os.Getenv("REDIS_ADDRESS"),
+		Password: "",
+		DB:       0,
+	})
+	if err != nil {
+		//TODO: do something? retry? get data directly from db?
+		logger.Error(err.Error())
+	}
 	return &userHandler{
 		logger: logger,
 		client: pb.NewUserClient(userConn),
 		conn:   userConn,
+		rdb:    rdb,
 	}
 }
 
@@ -128,6 +139,7 @@ func (u *userHandler) PostSignup(c *gin.Context) {
 	}
 	req := pb.SignupRequest{
 		Username: c.Request.FormValue("username"),
+		Role:     0,
 		Password: pass,
 		Email:    email,
 	}
@@ -258,16 +270,7 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 		id := data["id"]
 		var user shared.User
 
-		rdb, err := myredis.NewRedis(&redis.Options{
-			Addr:     os.Getenv("REDIS_ADDRESS"),
-			Password: "",
-			DB:       0,
-		})
-		if err != nil {
-			//TODO: do something? retry? get data directly from db?
-			u.logger.Error(err.Error())
-		}
-		err = rdb.Get(id, &user)
+		err = u.rdb.Get(id, &user)
 		if err != nil {
 			if err == redis.Nil {
 				log.Println("Get from db")
@@ -288,7 +291,7 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 						Phone:   res.Address.Phone,
 					},
 				}
-				err = rdb.Set(id, user)
+				err = u.rdb.Set(id, user)
 				if err != nil {
 					u.logger.Error(err.Error())
 				}
@@ -330,17 +333,18 @@ func (u *userHandler) GetUserProfile(c *gin.Context) {
 func (u *userHandler) PutUserProfile(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
 	defer cancel()
-	e := c.Request.FormValue("email")
+	email := c.Request.FormValue("email")
 	address := c.Request.FormValue("address")
 	phone := c.Request.FormValue("phone")
 	//TODO: validate phone number
-	_, err := mail.ParseAddress(e)
+	_, err := mail.ParseAddress(email)
 	if err != nil {
 		c.String(http.StatusBadRequest, "wrong email")
 		return
 	}
+	user := getUserCtx(c)
 	add := &pb.Address{Address: address, Phone: phone}
-	res, err := u.client.EditUser(ctx, &pb.EditUserRequest{Id: getUserCtx(c).ID, Email: e, Address: add})
+	res, err := u.client.EditUser(ctx, &pb.EditUserRequest{Id: user.ID, Email: email, Address: add})
 	if err != nil {
 		if s, ok := status.FromError(err); ok {
 			switch s.Code() {
@@ -367,6 +371,10 @@ func (u *userHandler) PutUserProfile(c *gin.Context) {
 		return
 	}
 	if res.Result {
+		user.Address.Address = address
+		user.Address.Phone = phone
+		user.Email = email
+		u.rdb.Set(user.ID, user)
 		c.String(http.StatusOK, "updated")
 		return
 	} else {
@@ -432,7 +440,6 @@ func getUserCtx(c *gin.Context) *shared.User {
 }
 func AdminMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		log.Println("ROOOLEEE", getUserCtx(ctx).Role)
 		if getUserCtx(ctx).Role > 0 {
 			ctx.Next()
 		} else {

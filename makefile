@@ -6,6 +6,7 @@ rpc:
 	mkdir -p $(grpc_path)
 	protoc --go_out=$(grpc_path) --go_opt=module=$(grpc_prefix) --go-grpc_out=$(grpc_path) --go-grpc_opt=module=$(grpc_prefix) $(grpc_files)
 docker:
+	npx tailwind -i ./server/web/css/main.css -o ./server/public/css/tailwind.css
 	templ generate
 	docker compose up --build
 temp:

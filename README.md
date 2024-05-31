@@ -16,8 +16,13 @@ Simple implementation of an online shop, written in Go, using gRPC.
 * shared: shared functions and structres 
 * user_service: gRPC user service
 ---
-## docker compose services
+## Docker compose services
 * mongodb
 * redis
 * user_service
 * server: main server
+
+## Frontend stack
+- templ
+- Htmx
+- tailwind

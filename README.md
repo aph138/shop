@@ -1,5 +1,6 @@
 # shop
 Simple implementation of an online shop, written in Go, using gRPC.
+# Note: work still in progress
 
 ## Directories map
 * api: gRPC files

@@ -10,12 +10,16 @@ services:
     environment:
       - ADDRESS=:9000
       - USER_SERVICE=user_service:9001
+      - STOCK_SERVICE=stock_service:9002
       - REDIS_ADDRESS=redis:6379
     volumes:
       - ./server/web:/app/server/web
       - ./server/public:/app/public
+      - ./server/main.go:/app/main.go
+      - ./server/handler/:/app/server/handler/
     depends_on:
       - user_service
+      - stock_service
       - redis
   
   #user service
@@ -27,10 +31,28 @@ services:
       - "9001:9001"
     depends_on:
       - mongodb
-    #note the mongodb -> it is the same with database service
+    #note the mongodb -> it is the same with database service name
     environment:
-      - mongoURL=mongodb://mongodb:27017
+      - DB_URL=mongodb://mongodb:27017
       - DB_NAME=mydb
+  
+  stock_service:
+    build: 
+      context: .
+      dockerfile: stock_service/dockerfile
+    ports:
+      - "9002:9002"
+    depends_on:
+      - mongodb
+    environment:
+      - PORT=9002
+      - DB_URL=mongodb://mongodb:27017
+      - DB_NAME=mydb
+    volumes:
+      - ./stock_service/main.go:/app/main.go
+      - ./api/stock_grpc:/app/api/stock_grpc
+      - ./shared:/app/shared
+      - ./pkg:/app/pkg
 
   #database service
   mongodb:
@@ -39,6 +61,9 @@ services:
       - "27017:27017"
     volumes:
       - mongo:/data/db
+    command:
+      - '--logpath'
+      - '/var/log/mongodb/mongod.log'
   #redis server for caching 
   redis:
     image: redis:latest

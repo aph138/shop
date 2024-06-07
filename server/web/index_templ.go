@@ -51,7 +51,7 @@ func Index(u shared.User) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				if u.Role != 0 {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/admin/list\"><button class=\"bg-black-500 text-white-200\">Users List</button></a>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/admin/list\"><button class=\"bg-black-500 text-white-200\">Users List</button></a> <a href=\"/admin/item\"><button class=\"bg-black-500 text-white-200\">Add item</button></a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

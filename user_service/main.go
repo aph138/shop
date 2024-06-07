@@ -42,7 +42,7 @@ var (
 
 func main() {
 	l := slog.Default()
-	db, err := db.NewDB(os.Getenv("mongoURL"), l, nil)
+	db, err := db.NewDB(os.Getenv("DB_URL"), l, nil)
 	if err != nil {
 		panic(err)
 	}

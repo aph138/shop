@@ -14,3 +14,9 @@ func render(c *gin.Context, t templ.Component) {
 		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+//TODO: Move
+
+type Handler interface {
+	Close() error
+}

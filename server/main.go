@@ -30,15 +30,23 @@ func init() {
 }
 
 func main() {
-	h := gin.Default()
 
 	userHandler := handler.NewUserHandler(os.Getenv("USER_SERVICE"), logger)
+	stockHandler, err := handler.NewStockHandler(os.Getenv("STOCK_SERVICE"), logger)
+	if err != nil {
+		logger.Error("err when creating stock handler: " + err.Error())
+	}
 	indexHandler := handler.NewIndexHandler(logger)
-
+	handlers := []handler.Handler{
+		userHandler,
+		stockHandler,
+	}
+	h := gin.Default()
 	h.Use(userHandler.AuthMiddleware())
 
 	h.StaticFS("/public", http.Dir("./public"))
 	h.GET("/", indexHandler.IndexGet)
+	//user handlers
 	h.GET("/signin", userHandler.GetSignin)
 	h.POST("/signin", userHandler.PostSignin)
 	h.GET("/signup", userHandler.GetSignup)
@@ -47,11 +55,16 @@ func main() {
 	h.GET("/password", userHandler.GetPassword)
 	h.PUT("/profile", userHandler.PutUserProfile)
 	h.PUT("/password", userHandler.PutPassword)
+	// stock handlers
+	h.GET("/item/:name", stockHandler.GetItem)
+	h.GET("/item", stockHandler.GetAll)
 
 	//restricted functions
 	adminGroupe := h.Group("/admin").Use(handler.AdminMiddleware())
 	adminGroupe.DELETE("/delete/:id", userHandler.DeleteUser)
 	adminGroupe.GET("/list", userHandler.GetAllUser)
+	adminGroupe.POST("/item", stockHandler.PostAddItem)
+	adminGroupe.GET("/item", stockHandler.GetAddItem)
 
 	h.GET("/test", func(ctx *gin.Context) {
 		ctx.Writer.Write([]byte(time.Now().String()))
@@ -75,12 +88,13 @@ func main() {
 	logger.Info("staring graceful shutdown")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*5000)
 	defer cancel()
-	var err error
 	if err = srv.Shutdown(ctx); err != nil {
 		logger.Error(err.Error())
 	}
-	if err = userHandler.Close(); err != nil {
-		logger.Error(err.Error())
+	for _, h := range handlers {
+		if err = h.Close(); err != nil {
+			logger.Error(err.Error())
+		}
 	}
 	logger.Info("server shutted down")
 

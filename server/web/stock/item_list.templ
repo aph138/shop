@@ -1,0 +1,12 @@
+package stockview
+
+import "github.com/aph138/shop/server/web/layout"
+import "github.com/aph138/shop/shared"
+
+templ ItemList(items []shared.Item){
+    @layout.Main("List"){
+        for _,item:=range items{
+            <div>{item.Name}</div><br/>
+        }
+    }
+}

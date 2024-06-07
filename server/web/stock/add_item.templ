@@ -1,0 +1,23 @@
+package stockview
+
+import "github.com/aph138/shop/server/web/layout"
+
+templ AddItem(){
+    @layout.Main("Add Item"){
+        <div class="flex justify-center pt-6">
+            <form class="flex flex-col items-center" id="form" hx-ext="response-targets">
+                <div class="mb-3">
+                    <label class="block text-gray-700 text-sm font-bold mb-1" for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="name"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight"/>
+                </div>
+                <button class="bg-blue-500 hover:bg-blue-700 rounded px-2 py-1 w-full"
+                hx-post="/admin/item"
+                hx-include="#form"
+                hx-target="#result"
+                hx-target-error="#result"> Add </button>
+                <div id="result"></div>
+            </form>
+        </div>
+    }
+}

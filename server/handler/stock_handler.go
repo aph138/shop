@@ -2,9 +2,12 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	pb "github.com/aph138/shop/api/stock_grpc"
@@ -60,10 +63,10 @@ func (s *stockHandler) GetAll(c *gin.Context) {
 			c.String(http.StatusInternalServerError, RetryMSG)
 			return
 		}
+		item.Link = r.Link
 		item.Name = r.Name
-		item.Description = r.Description
 		item.Price = r.Price
-		item.Photos = []string{r.Photo}
+		item.Poster = r.Poster
 		item.Number = r.Number
 		result = append(result, item)
 	}
@@ -71,20 +74,54 @@ func (s *stockHandler) GetAll(c *gin.Context) {
 
 }
 func (s *stockHandler) PostAddItem(c *gin.Context) {
+
 	//TODO: add other fields
 	name := c.Request.FormValue("name")
+
+	if len(name) < 1 {
+		c.String(http.StatusBadRequest, "empty name field")
+		return
+	}
+
+	link := c.Request.FormValue("link")
+	if len(link) < 1 {
+		//default value for link is product's name
+		link = name
+	}
+	form, err := c.MultipartForm()
+	if err != nil {
+		log.Println(err.Error())
+		c.String(http.StatusBadRequest, "multipart form error")
+		return
+	}
+	// check if there is a poster
+	posterFile := form.File["poster"]
+	if len(posterFile) <= 0 {
+		c.String(http.StatusBadRequest, "no poster")
+		return
+	}
+	// save poster path
+	folder := time.Now().Unix()
+	poster := fmt.Sprintf("%d/%s", folder, filepath.Base(posterFile[0].Filename))
+	dst := filepath.Join("./uploads/", fmt.Sprint(folder), poster)
+
+	req := &pb.Item{
+		Name:   name,
+		Link:   link,
+		Poster: poster,
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*300)
 	defer cancel()
-	req := &pb.Item{
-		Name: name,
-	}
+
 	res, err := s.client.AddItem(ctx, req)
 	if err != nil {
+
 		if s, ok := status.FromError(err); ok {
 			switch s.Code() {
 			case codes.AlreadyExists:
 				{
-					c.String(http.StatusBadRequest, "an item with this name alreay exists")
+					c.String(http.StatusBadRequest, "an item with this link alreay exists")
 				}
 			default:
 				{
@@ -97,6 +134,14 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 		return
 	}
 	if res.Result {
+
+		//TODO: set max size uplaod
+		//save images on disk if everything went good
+		if err = c.SaveUploadedFile(posterFile[0], dst); err != nil {
+			s.logger.Error(err.Error())
+			c.String(http.StatusInternalServerError, RetryMSG)
+			return
+		}
 		c.String(http.StatusCreated, "item successfully has been added")
 	} else {
 		c.String(http.StatusNoContent, "item didn't add")
@@ -111,7 +156,7 @@ func (s *stockHandler) GetItem(c *gin.Context) {
 	item := shared.Item{}
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
 	defer cancel()
-	result, err := s.client.GetItem(ctx, &pb.GetItemRequest{})
+	result, err := s.client.GetItem(ctx, &pb.GetItemRequest{Link: c.Param("name")})
 	if err != nil {
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
@@ -123,33 +168,8 @@ func (s *stockHandler) GetItem(c *gin.Context) {
 	item.Price = result.Price
 	item.Number = result.Number
 
+	if len(item.ID) < 1 {
+		c.String(http.StatusBadRequest, "no item has founded")
+	}
 	render(c, stockview.Item(item))
-}
-func (s *stockHandler) GetItemList(c *gin.Context) {
-	var items []shared.Item
-
-	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
-	defer cancel()
-	stream, err := s.client.GetItemList(ctx, &pb.GetItemListRequest{})
-	if err != nil {
-
-	}
-	var item shared.Item
-	for {
-		i, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-
-		}
-		item = shared.Item{
-			Name:        i.Name,
-			Description: i.Description,
-			Price:       i.Price,
-			//TODO compelete
-		}
-		items = append(items, item)
-	}
-
 }

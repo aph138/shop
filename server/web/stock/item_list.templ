@@ -2,11 +2,31 @@ package stockview
 
 import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
+import "fmt"
 
 templ ItemList(items []shared.Item){
     @layout.Main("List"){
-        for _,item:=range items{
-            <div>{item.Name}</div><br/>
+        if len(items)<1{
+            <div class="flex justify-center min-h-screen items-center">No Item has been found</div>
+        }else{
+            <div class="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                for _,item:=range items{
+                    <a href={templ.SafeURL(fmt.Sprintf("/item/%s",item.Link))}>
+                        <div class="bg-gray-100 shadow rounded-lg overflow-hidden">
+                        <img class="w-full h-48 object-cover" alt="product image" 
+                        src={templ.JoinStringErrs(fmt.Sprintf("/public/%s",item.Poster))}/>
+                        <div class="p-4">
+                            <h2 class="text-lg font-bold text-gray-900">{item.Name}</h2>
+                            <p class="mt-2 text-gray-500">{fmt.Sprintf("%.2f ﷼",item.Price)}</p>
+                        </div>
+                        </div>
+                    </a>
+                }
+                
+            </div>
+        </div>
         }
+        
     }
 }

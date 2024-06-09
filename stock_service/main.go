@@ -94,16 +94,18 @@ func (s *stockService) AddItem(ctx context.Context, in *pb.Item) (*pb.AddItemRes
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 	item := shared.Item{
+		Link:        in.Link,
 		Name:        in.Name,
 		Description: in.Description,
 		Number:      in.Number,
 		Price:       in.Price,
+		Poster:      in.Poster,
 		Photos:      in.Photos,
 	}
 	r, err := s.db.InsertOne(_ctx, item)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			return nil, status.Error(codes.AlreadyExists, "duplicated name")
+			return nil, status.Error(codes.AlreadyExists, "duplicated link")
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -115,12 +117,8 @@ func (s *stockService) AddItem(ctx context.Context, in *pb.Item) (*pb.AddItemRes
 func (s *stockService) GetItem(ctx context.Context, in *pb.GetItemRequest) (*pb.Item, error) {
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
-	id, err := primitive.ObjectIDFromHex(in.Id)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid id")
-	}
 	result := shared.Item{}
-	err = s.db.FindOne(_ctx, bson.M{"_id": id}).Decode(&result)
+	err := s.db.FindOne(_ctx, bson.M{"link": in.Link}).Decode(&result)
 	if err != nil {
 		s.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
@@ -131,7 +129,9 @@ func (s *stockService) GetItem(ctx context.Context, in *pb.GetItemRequest) (*pb.
 		Name:        result.Name,
 		Description: result.Description,
 		Price:       result.Price,
+		Poster:      result.Poster,
 		Photos:      result.Photos,
+		Link:        result.Link,
 		Number:      result.Number,
 	}, nil
 }
@@ -147,35 +147,24 @@ func (s *stockService) GetItemList(in *pb.GetItemListRequest, stream pb.Stock_Ge
 	}
 	defer cursor.Close(context.Background())
 	var item shared.Item
-	var result *pb.GetItemListResponse
 	for cursor.Next(context.Background()) {
 		err = cursor.Decode(&item)
 		if err != nil {
 			s.logger.Error(err.Error())
 		}
-		if len(item.Photos) > 0 {
-			result = &pb.GetItemListResponse{
-				Name:        item.Name,
-				Description: item.Description,
-				Price:       item.Price,
-				Number:      item.Number,
-				Photo:       item.Photos[0],
-			}
-		} else {
-			result = &pb.GetItemListResponse{
-				Name:        item.Name,
-				Description: item.Description,
-				Price:       item.Price,
-				Number:      item.Number,
-			}
-		}
-		stream.Send(result)
+		stream.Send(&pb.GetItemListResponse{
+			Link:   item.Link,
+			Name:   item.Name,
+			Price:  item.Price,
+			Number: item.Number,
+			Poster: item.Poster,
+		})
 	}
 	return nil
 }
 func createUniqeIndex(c *mongo.Collection) error {
 	name := mongo.IndexModel{
-		Keys:    bson.D{primitive.E{Key: "name", Value: 1}},
+		Keys:    bson.D{primitive.E{Key: "link", Value: 1}},
 		Options: options.Index().SetUnique(true),
 	}
 	_, err := c.Indexes().CreateOne(context.Background(), name)

@@ -10,27 +10,29 @@ service Stock{
 message Item{
     string id=1;
     string name=2;
-    int32 number=3;
-    string description=4;
-    float price=5;
-    repeated string photos=6;
+    string link=3;
+    int32 number=4;
+    string description=5;
+    float price=6;
+    string poster=7;
+    repeated string photos=8;
 }
 message AddItemResponse{
     bool result=1;
 }
 
 message GetItemRequest{
-    string id=1;
+    string link=1;
 }
 message GetItemListRequest{
     int64 offset=1;
     int64 limit=2;
 }
 message GetItemListResponse{
-    string name=1;
-    int32 number=2;
-    string description=3;
+    string link=1;
+    string name=2;
+    int32 number=3;
     float price=4;
-    string photo=5;
+    string poster=5;
 }
 

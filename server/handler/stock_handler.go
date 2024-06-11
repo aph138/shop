@@ -103,7 +103,7 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 	// save poster path
 	folder := time.Now().Unix()
 	poster := fmt.Sprintf("%d/%s", folder, filepath.Base(posterFile[0].Filename))
-	dst := filepath.Join("./uploads/", fmt.Sprint(folder), poster)
+	dst := filepath.Join("./uploads/", fmt.Sprint(folder), filepath.Base(posterFile[0].Filename))
 
 	req := &pb.Item{
 		Name:   name,

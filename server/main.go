@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -45,6 +47,7 @@ func main() {
 	h.Use(userHandler.AuthMiddleware())
 
 	h.StaticFS("/public", http.Dir("./public"))
+	h.GET("/img/:folder/:file", serveImage)
 	h.GET("/", indexHandler.IndexGet)
 	//user handlers
 	h.GET("/signin", userHandler.GetSignin)
@@ -97,5 +100,19 @@ func main() {
 		}
 	}
 	logger.Info("server shutted down")
+
+}
+func serveImage(c *gin.Context) {
+	path := "uploads"
+	folder := c.Param("folder")
+	file := c.Param("file")
+	safeFile := filepath.Base(file)
+	finalPath := filepath.Join(path, folder, safeFile)
+	// check if path is safe
+	if !strings.HasPrefix(finalPath, path) {
+		c.String(http.StatusBadRequest, "Bad Request")
+		return
+	}
+	c.File(finalPath)
 
 }

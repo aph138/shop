@@ -2,12 +2,13 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: protos/stock.proto
+// source: stock.proto
 
 package stock_grpc
 
 import (
 	context "context"
+	common "github.com/aph138/shop/api/common"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -22,9 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StockClient interface {
-	AddItem(ctx context.Context, in *Item, opts ...grpc.CallOption) (*AddItemResponse, error)
+	AddItem(ctx context.Context, in *Item, opts ...grpc.CallOption) (*common.BoolMessage, error)
 	GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*Item, error)
 	GetItemList(ctx context.Context, in *GetItemListRequest, opts ...grpc.CallOption) (Stock_GetItemListClient, error)
+	DeleteItem(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*common.BoolMessage, error)
 }
 
 type stockClient struct {
@@ -35,9 +37,9 @@ func NewStockClient(cc grpc.ClientConnInterface) StockClient {
 	return &stockClient{cc}
 }
 
-func (c *stockClient) AddItem(ctx context.Context, in *Item, opts ...grpc.CallOption) (*AddItemResponse, error) {
-	out := new(AddItemResponse)
-	err := c.cc.Invoke(ctx, "/Stock/AddItem", in, out, opts...)
+func (c *stockClient) AddItem(ctx context.Context, in *Item, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.Stock/AddItem", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +48,7 @@ func (c *stockClient) AddItem(ctx context.Context, in *Item, opts ...grpc.CallOp
 
 func (c *stockClient) GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*Item, error) {
 	out := new(Item)
-	err := c.cc.Invoke(ctx, "/Stock/GetItem", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/shop.Stock/GetItem", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +56,7 @@ func (c *stockClient) GetItem(ctx context.Context, in *GetItemRequest, opts ...g
 }
 
 func (c *stockClient) GetItemList(ctx context.Context, in *GetItemListRequest, opts ...grpc.CallOption) (Stock_GetItemListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Stock_ServiceDesc.Streams[0], "/Stock/GetItemList", opts...)
+	stream, err := c.cc.NewStream(ctx, &Stock_ServiceDesc.Streams[0], "/shop.Stock/GetItemList", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +87,23 @@ func (x *stockGetItemListClient) Recv() (*GetItemListResponse, error) {
 	return m, nil
 }
 
+func (c *stockClient) DeleteItem(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.Stock/DeleteItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StockServer is the server API for Stock service.
 // All implementations must embed UnimplementedStockServer
 // for forward compatibility
 type StockServer interface {
-	AddItem(context.Context, *Item) (*AddItemResponse, error)
+	AddItem(context.Context, *Item) (*common.BoolMessage, error)
 	GetItem(context.Context, *GetItemRequest) (*Item, error)
 	GetItemList(*GetItemListRequest, Stock_GetItemListServer) error
+	DeleteItem(context.Context, *common.StringMessage) (*common.BoolMessage, error)
 	mustEmbedUnimplementedStockServer()
 }
 
@@ -99,7 +111,7 @@ type StockServer interface {
 type UnimplementedStockServer struct {
 }
 
-func (UnimplementedStockServer) AddItem(context.Context, *Item) (*AddItemResponse, error) {
+func (UnimplementedStockServer) AddItem(context.Context, *Item) (*common.BoolMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddItem not implemented")
 }
 func (UnimplementedStockServer) GetItem(context.Context, *GetItemRequest) (*Item, error) {
@@ -107,6 +119,9 @@ func (UnimplementedStockServer) GetItem(context.Context, *GetItemRequest) (*Item
 }
 func (UnimplementedStockServer) GetItemList(*GetItemListRequest, Stock_GetItemListServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetItemList not implemented")
+}
+func (UnimplementedStockServer) DeleteItem(context.Context, *common.StringMessage) (*common.BoolMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteItem not implemented")
 }
 func (UnimplementedStockServer) mustEmbedUnimplementedStockServer() {}
 
@@ -131,7 +146,7 @@ func _Stock_AddItem_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Stock/AddItem",
+		FullMethod: "/shop.Stock/AddItem",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StockServer).AddItem(ctx, req.(*Item))
@@ -149,7 +164,7 @@ func _Stock_GetItem_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Stock/GetItem",
+		FullMethod: "/shop.Stock/GetItem",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StockServer).GetItem(ctx, req.(*GetItemRequest))
@@ -178,11 +193,29 @@ func (x *stockGetItemListServer) Send(m *GetItemListResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Stock_DeleteItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.StringMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServer).DeleteItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shop.Stock/DeleteItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServer).DeleteItem(ctx, req.(*common.StringMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Stock_ServiceDesc is the grpc.ServiceDesc for Stock service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Stock_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Stock",
+	ServiceName: "shop.Stock",
 	HandlerType: (*StockServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -193,6 +226,10 @@ var Stock_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetItem",
 			Handler:    _Stock_GetItem_Handler,
 		},
+		{
+			MethodName: "DeleteItem",
+			Handler:    _Stock_DeleteItem_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -201,5 +238,5 @@ var Stock_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "protos/stock.proto",
+	Metadata: "stock.proto",
 }

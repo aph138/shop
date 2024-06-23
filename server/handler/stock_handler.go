@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	pb "github.com/aph138/shop/api/stock_grpc"
@@ -25,6 +26,10 @@ type stockHandler struct {
 	logger *slog.Logger
 	client pb.StockClient
 }
+
+const (
+	UPLOAD_FOLDER = "uploads"
+)
 
 func NewStockHandler(grpc_url string, l *slog.Logger) (*stockHandler, error) {
 	opt := []grpc.DialOption{
@@ -74,19 +79,32 @@ func (s *stockHandler) GetAll(c *gin.Context) {
 
 }
 func (s *stockHandler) PostAddItem(c *gin.Context) {
-
-	//TODO: add other fields
 	name := c.Request.FormValue("name")
-
 	if len(name) < 1 {
 		c.String(http.StatusBadRequest, "empty name field")
 		return
 	}
+	// description field can be empty
+	des := c.Request.FormValue("des")
 
+	_number := c.Request.FormValue("number")
+	number, err := strconv.Atoi(_number)
+	if err != nil {
+		s.logger.Error(err.Error())
+		c.String(http.StatusBadRequest, "Bad Request: initial number")
+		return
+	}
 	link := c.Request.FormValue("link")
 	if len(link) < 1 {
 		//default value for link is product's name
 		link = name
+	}
+	_price := c.Request.FormValue("price")
+	price, err := strconv.ParseFloat(_price, 32)
+	if err != nil {
+		s.logger.Error(err.Error())
+		c.String(http.StatusBadRequest, "Bad Request: price")
+		return
 	}
 	form, err := c.MultipartForm()
 	if err != nil {
@@ -102,13 +120,25 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 	}
 	// save poster path
 	folder := time.Now().Unix()
-	poster := fmt.Sprintf("%d/%s", folder, filepath.Base(posterFile[0].Filename))
-	dst := filepath.Join("./uploads/", fmt.Sprint(folder), filepath.Base(posterFile[0].Filename))
 
+	//initialize poster path
+	poster := fmt.Sprintf("%d/%s", folder, filepath.Base(posterFile[0].Filename))
+
+	//initialize photos' path
+	var photos []string
+
+	photosFile := form.File["photos"]
+	for _, p := range photosFile {
+		photos = append(photos, fmt.Sprintf("%d/%s", folder, filepath.Base(p.Filename)))
+	}
 	req := &pb.Item{
-		Name:   name,
-		Link:   link,
-		Poster: poster,
+		Name:        name,
+		Link:        link,
+		Description: des,
+		Poster:      poster,
+		Number:      int32(number),
+		Price:       float32(price),
+		Photos:      photos,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*300)
@@ -133,14 +163,23 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	if res.Result {
+	if res.Value {
 
 		//TODO: set max size uplaod
 		//save images on disk if everything went good
+		dst := filepath.Join(UPLOAD_FOLDER, fmt.Sprint(folder), filepath.Base(posterFile[0].Filename))
 		if err = c.SaveUploadedFile(posterFile[0], dst); err != nil {
 			s.logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, RetryMSG)
 			return
+		}
+		for _, p := range photosFile {
+			d := filepath.Join(UPLOAD_FOLDER, fmt.Sprint(folder), filepath.Base(p.Filename))
+			if err = c.SaveUploadedFile(p, d); err != nil {
+				s.logger.Error(err.Error())
+				c.String(http.StatusInternalServerError, RetryMSG)
+				return
+			}
 		}
 		c.String(http.StatusCreated, "item successfully has been added")
 	} else {
@@ -163,6 +202,7 @@ func (s *stockHandler) GetItem(c *gin.Context) {
 	}
 	item.Name = result.Name
 	item.ID = result.Id
+	item.Poster = result.Poster
 	item.Description = result.Description
 	item.Photos = result.Photos
 	item.Price = result.Price
@@ -172,4 +212,8 @@ func (s *stockHandler) GetItem(c *gin.Context) {
 		c.String(http.StatusBadRequest, "no item has founded")
 	}
 	render(c, stockview.Item(item))
+}
+
+func (s *stockHandler) DeleteItem(c *gin.Context) {
+	// s.client
 }

@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v3.12.4
-// source: protos/shop.proto
+// source: shop.proto
 
 package shop_grpc
 
@@ -19,18 +19,18 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var File_protos_shop_proto protoreflect.FileDescriptor
+var File_shop_proto protoreflect.FileDescriptor
 
-var file_protos_shop_proto_rawDesc = []byte{
-	0x0a, 0x11, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x73, 0x2f, 0x73, 0x68, 0x6f, 0x70, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x32, 0x06, 0x0a, 0x04, 0x53, 0x68, 0x6f, 0x70, 0x42, 0x22, 0x5a, 0x20, 0x67,
-	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x68, 0x31, 0x33, 0x38,
-	0x2f, 0x73, 0x68, 0x6f, 0x70, 0x2f, 0x73, 0x68, 0x6f, 0x70, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x62,
-	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+var file_shop_proto_rawDesc = []byte{
+	0x0a, 0x0a, 0x73, 0x68, 0x6f, 0x70, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x04, 0x73, 0x68,
+	0x6f, 0x70, 0x32, 0x06, 0x0a, 0x04, 0x53, 0x68, 0x6f, 0x70, 0x42, 0x22, 0x5a, 0x20, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x61, 0x70, 0x68, 0x31, 0x33, 0x38, 0x2f,
+	0x73, 0x68, 0x6f, 0x70, 0x2f, 0x73, 0x68, 0x6f, 0x70, 0x5f, 0x67, 0x72, 0x70, 0x63, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
-var file_protos_shop_proto_goTypes = []interface{}{}
-var file_protos_shop_proto_depIdxs = []int32{
+var file_shop_proto_goTypes = []interface{}{}
+var file_shop_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -38,26 +38,26 @@ var file_protos_shop_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_protos_shop_proto_init() }
-func file_protos_shop_proto_init() {
-	if File_protos_shop_proto != nil {
+func init() { file_shop_proto_init() }
+func file_shop_proto_init() {
+	if File_shop_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_protos_shop_proto_rawDesc,
+			RawDescriptor: file_shop_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_protos_shop_proto_goTypes,
-		DependencyIndexes: file_protos_shop_proto_depIdxs,
+		GoTypes:           file_shop_proto_goTypes,
+		DependencyIndexes: file_shop_proto_depIdxs,
 	}.Build()
-	File_protos_shop_proto = out.File
-	file_protos_shop_proto_rawDesc = nil
-	file_protos_shop_proto_goTypes = nil
-	file_protos_shop_proto_depIdxs = nil
+	File_shop_proto = out.File
+	file_shop_proto_rawDesc = nil
+	file_shop_proto_goTypes = nil
+	file_shop_proto_depIdxs = nil
 }

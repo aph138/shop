@@ -43,7 +43,11 @@ func main() {
 		userHandler,
 		stockHandler,
 	}
+
 	h := gin.Default()
+	// set max size for uplaod
+	h.MaxMultipartMemory = 8 >> 10 // 10MB
+
 	h.Use(userHandler.AuthMiddleware())
 
 	h.StaticFS("/public", http.Dir("./public"))

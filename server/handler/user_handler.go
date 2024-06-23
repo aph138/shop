@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aph138/shop/api/common"
 	pb "github.com/aph138/shop/api/user_grpc"
 	"github.com/aph138/shop/pkg/auth"
 	"github.com/aph138/shop/pkg/myredis"
@@ -104,7 +105,7 @@ func (u *userHandler) PostSignin(c *gin.Context) {
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	data := map[string]string{"id": res.Id}
+	data := map[string]string{"id": res.Value}
 	token, err := i.Token(data, WEEK_IN_MINUTE)
 	if err != nil {
 		u.logger.Error(err.Error())
@@ -175,7 +176,7 @@ func (u *userHandler) PostSignup(c *gin.Context) {
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	data := map[string]string{"id": res.Id}
+	data := map[string]string{"id": res.Value}
 	token, err := i.Token(data, WEEK_IN_MINUTE)
 	if err != nil {
 		u.logger.Error(err.Error())
@@ -191,7 +192,7 @@ func (u *userHandler) PostSignup(c *gin.Context) {
 func (u *userHandler) GetAllUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Millisecond*500)
 	defer cancel()
-	list := &pb.Empty{}
+	list := &common.Empty{}
 	stream, err := u.client.UserList(ctx, list)
 	if err != nil {
 		u.logger.Error(err.Error())
@@ -268,7 +269,7 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 		err = u.rdb.Get(id, &user)
 		if err != nil {
 			if err == redis.Nil {
-				res, err := u.client.GetUser(context.TODO(), &pb.WithID{Id: id})
+				res, err := u.client.GetUser(context.TODO(), &common.StringMessage{Value: id})
 				if err != nil {
 					u.logger.Error(err.Error())
 					c.Next()
@@ -302,13 +303,13 @@ func (u *userHandler) AuthMiddleware() gin.HandlerFunc {
 func (u *userHandler) DeleteUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
 	defer cancel()
-	res, err := u.client.DeleteUser(ctx, &pb.WithID{Id: c.Param("id")})
+	res, err := u.client.DeleteUser(ctx, &common.StringMessage{Value: c.Param("id")})
 	if err != nil {
 		u.logger.Error(err.Error())
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	if res.Result {
+	if res.Value {
 		c.Writer.WriteHeader(http.StatusOK)
 	} else {
 		c.Writer.WriteHeader(http.StatusInternalServerError)
@@ -362,7 +363,7 @@ func (u *userHandler) PutUserProfile(c *gin.Context) {
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	if res.Result {
+	if res.Value {
 		user.Address.Address = address
 		user.Address.Phone = phone
 		user.Email = email
@@ -413,7 +414,7 @@ func (u *userHandler) PutPassword(c *gin.Context) {
 		c.String(http.StatusInternalServerError, RetryMSG)
 		return
 	}
-	if signinResult.Result {
+	if signinResult.Value {
 		c.String(http.StatusOK, "password has changed")
 	} else {
 		c.String(http.StatusOK, "password hasn't changed. something went wrong.")

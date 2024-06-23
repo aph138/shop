@@ -2,12 +2,13 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: protos/user.proto
+// source: user.proto
 
 package user_grpc
 
 import (
 	context "context"
+	common "github.com/aph138/shop/api/common"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -22,13 +23,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserClient interface {
-	Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*WithID, error)
-	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*WithID, error)
-	UserList(ctx context.Context, in *Empty, opts ...grpc.CallOption) (User_UserListClient, error)
-	GetUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*GetUserResponse, error)
-	DeleteUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*WithBool, error)
-	EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*WithBool, error)
-	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*WithBool, error)
+	Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*common.StringMessage, error)
+	Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*common.StringMessage, error)
+	UserList(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (User_UserListClient, error)
+	GetUser(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*GetUserResponse, error)
+	DeleteUser(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*common.BoolMessage, error)
+	EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
+	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
 }
 
 type userClient struct {
@@ -39,26 +40,26 @@ func NewUserClient(cc grpc.ClientConnInterface) UserClient {
 	return &userClient{cc}
 }
 
-func (c *userClient) Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*WithID, error) {
-	out := new(WithID)
-	err := c.cc.Invoke(ctx, "/User/Signin", in, out, opts...)
+func (c *userClient) Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*common.StringMessage, error) {
+	out := new(common.StringMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/Signin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*WithID, error) {
-	out := new(WithID)
-	err := c.cc.Invoke(ctx, "/User/Signup", in, out, opts...)
+func (c *userClient) Signup(ctx context.Context, in *SignupRequest, opts ...grpc.CallOption) (*common.StringMessage, error) {
+	out := new(common.StringMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/Signup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) UserList(ctx context.Context, in *Empty, opts ...grpc.CallOption) (User_UserListClient, error) {
-	stream, err := c.cc.NewStream(ctx, &User_ServiceDesc.Streams[0], "/User/UserList", opts...)
+func (c *userClient) UserList(ctx context.Context, in *common.Empty, opts ...grpc.CallOption) (User_UserListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &User_ServiceDesc.Streams[0], "/shop.User/UserList", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,36 +90,36 @@ func (x *userUserListClient) Recv() (*UserListResponse, error) {
 	return m, nil
 }
 
-func (c *userClient) GetUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*GetUserResponse, error) {
+func (c *userClient) GetUser(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*GetUserResponse, error) {
 	out := new(GetUserResponse)
-	err := c.cc.Invoke(ctx, "/User/GetUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/shop.User/GetUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) DeleteUser(ctx context.Context, in *WithID, opts ...grpc.CallOption) (*WithBool, error) {
-	out := new(WithBool)
-	err := c.cc.Invoke(ctx, "/User/DeleteUser", in, out, opts...)
+func (c *userClient) DeleteUser(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/DeleteUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*WithBool, error) {
-	out := new(WithBool)
-	err := c.cc.Invoke(ctx, "/User/EditUser", in, out, opts...)
+func (c *userClient) EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/EditUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*WithBool, error) {
-	out := new(WithBool)
-	err := c.cc.Invoke(ctx, "/User/ChangePassword", in, out, opts...)
+func (c *userClient) ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/ChangePassword", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +130,13 @@ func (c *userClient) ChangePassword(ctx context.Context, in *ChangePasswordReque
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
 type UserServer interface {
-	Signin(context.Context, *SigninRequest) (*WithID, error)
-	Signup(context.Context, *SignupRequest) (*WithID, error)
-	UserList(*Empty, User_UserListServer) error
-	GetUser(context.Context, *WithID) (*GetUserResponse, error)
-	DeleteUser(context.Context, *WithID) (*WithBool, error)
-	EditUser(context.Context, *EditUserRequest) (*WithBool, error)
-	ChangePassword(context.Context, *ChangePasswordRequest) (*WithBool, error)
+	Signin(context.Context, *SigninRequest) (*common.StringMessage, error)
+	Signup(context.Context, *SignupRequest) (*common.StringMessage, error)
+	UserList(*common.Empty, User_UserListServer) error
+	GetUser(context.Context, *common.StringMessage) (*GetUserResponse, error)
+	DeleteUser(context.Context, *common.StringMessage) (*common.BoolMessage, error)
+	EditUser(context.Context, *EditUserRequest) (*common.BoolMessage, error)
+	ChangePassword(context.Context, *ChangePasswordRequest) (*common.BoolMessage, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -143,25 +144,25 @@ type UserServer interface {
 type UnimplementedUserServer struct {
 }
 
-func (UnimplementedUserServer) Signin(context.Context, *SigninRequest) (*WithID, error) {
+func (UnimplementedUserServer) Signin(context.Context, *SigninRequest) (*common.StringMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signin not implemented")
 }
-func (UnimplementedUserServer) Signup(context.Context, *SignupRequest) (*WithID, error) {
+func (UnimplementedUserServer) Signup(context.Context, *SignupRequest) (*common.StringMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Signup not implemented")
 }
-func (UnimplementedUserServer) UserList(*Empty, User_UserListServer) error {
+func (UnimplementedUserServer) UserList(*common.Empty, User_UserListServer) error {
 	return status.Errorf(codes.Unimplemented, "method UserList not implemented")
 }
-func (UnimplementedUserServer) GetUser(context.Context, *WithID) (*GetUserResponse, error) {
+func (UnimplementedUserServer) GetUser(context.Context, *common.StringMessage) (*GetUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedUserServer) DeleteUser(context.Context, *WithID) (*WithBool, error) {
+func (UnimplementedUserServer) DeleteUser(context.Context, *common.StringMessage) (*common.BoolMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
 }
-func (UnimplementedUserServer) EditUser(context.Context, *EditUserRequest) (*WithBool, error) {
+func (UnimplementedUserServer) EditUser(context.Context, *EditUserRequest) (*common.BoolMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EditUser not implemented")
 }
-func (UnimplementedUserServer) ChangePassword(context.Context, *ChangePasswordRequest) (*WithBool, error) {
+func (UnimplementedUserServer) ChangePassword(context.Context, *ChangePasswordRequest) (*common.BoolMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
@@ -187,7 +188,7 @@ func _User_Signin_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/User/Signin",
+		FullMethod: "/shop.User/Signin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServer).Signin(ctx, req.(*SigninRequest))
@@ -205,7 +206,7 @@ func _User_Signup_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/User/Signup",
+		FullMethod: "/shop.User/Signup",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServer).Signup(ctx, req.(*SignupRequest))
@@ -214,7 +215,7 @@ func _User_Signup_Handler(srv interface{}, ctx context.Context, dec func(interfa
 }
 
 func _User_UserList_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Empty)
+	m := new(common.Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -235,7 +236,7 @@ func (x *userUserListServer) Send(m *UserListResponse) error {
 }
 
 func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WithID)
+	in := new(common.StringMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -244,16 +245,16 @@ func _User_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/User/GetUser",
+		FullMethod: "/shop.User/GetUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).GetUser(ctx, req.(*WithID))
+		return srv.(UserServer).GetUser(ctx, req.(*common.StringMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WithID)
+	in := new(common.StringMessage)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -262,10 +263,10 @@ func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/User/DeleteUser",
+		FullMethod: "/shop.User/DeleteUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServer).DeleteUser(ctx, req.(*WithID))
+		return srv.(UserServer).DeleteUser(ctx, req.(*common.StringMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -280,7 +281,7 @@ func _User_EditUser_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/User/EditUser",
+		FullMethod: "/shop.User/EditUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServer).EditUser(ctx, req.(*EditUserRequest))
@@ -298,7 +299,7 @@ func _User_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/User/ChangePassword",
+		FullMethod: "/shop.User/ChangePassword",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServer).ChangePassword(ctx, req.(*ChangePasswordRequest))
@@ -310,7 +311,7 @@ func _User_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var User_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "User",
+	ServiceName: "shop.User",
 	HandlerType: (*UserServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -345,5 +346,5 @@ var User_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "protos/user.proto",
+	Metadata: "user.proto",
 }

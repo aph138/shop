@@ -1,0 +1,11 @@
+syntax = "proto3";
+package shop;
+option go_package="github.com/aph138/shop/api/common";
+
+message BoolMessage{
+    bool value = 1;
+}
+message StringMessage{
+    string value=1;
+}
+message Empty{}

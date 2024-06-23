@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aph138/shop/api/common"
 	pb "github.com/aph138/shop/api/stock_grpc"
 	"github.com/aph138/shop/pkg/db"
 	"github.com/aph138/shop/shared"
@@ -90,7 +91,7 @@ func main() {
 
 }
 
-func (s *stockService) AddItem(ctx context.Context, in *pb.Item) (*pb.AddItemResponse, error) {
+func (s *stockService) AddItem(ctx context.Context, in *pb.Item) (*common.BoolMessage, error) {
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 	item := shared.Item{
@@ -109,10 +110,8 @@ func (s *stockService) AddItem(ctx context.Context, in *pb.Item) (*pb.AddItemRes
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if r.InsertedID != nil {
-		return &pb.AddItemResponse{Result: true}, nil
-	}
-	return &pb.AddItemResponse{Result: false}, nil
+	return &common.BoolMessage{Value: r.InsertedID != nil}, nil
+
 }
 func (s *stockService) GetItem(ctx context.Context, in *pb.GetItemRequest) (*pb.Item, error) {
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)

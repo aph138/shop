@@ -2,7 +2,7 @@ package userview
 import "github.com/aph138/shop/server/web/layout"
 templ Signin(){
     @layout.Main("Signin"){
-        <div class="bg-gray-100 flex items-center justify-center min-h-screen">
+        <div class="bg-gray-100 flex items-center justify-center min-h-screen" hx-ext="response-targets">
             <form id="form" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"> 
             <h2 class="text-2xl font-bold mb-6 text-center">Sign In</h2>
             <div class="mb-4">
@@ -15,7 +15,8 @@ templ Signin(){
             </div>
             <div id="result" class="text-red-600 pb-2"></div>
             <div class="flex items-center justify-between">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" type="button" hx-post="/signin" hx-include="#form" hx-target="#result">Sign In</button>
+                <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" type="button"
+                hx-post="/signin" hx-include="#form" hx-target="#result" hx-target-error="#result">Sign In</button>
                 <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="/signup">Don't have account?</a>
              </div>
             </form>

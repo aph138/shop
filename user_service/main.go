@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aph138/shop/api/common"
 	pb "github.com/aph138/shop/api/user_grpc"
 	"github.com/aph138/shop/pkg/db"
 	"github.com/aph138/shop/pkg/logger"
@@ -89,7 +90,7 @@ func main() {
 
 }
 
-func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.WithID, error) {
+func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*common.StringMessage, error) {
 	_ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
 	query := bson.M{"username": in.Username}
@@ -105,10 +106,10 @@ func (u *UserService) Signin(ctx context.Context, in *pb.SigninRequest) (*pb.Wit
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password)); err != nil {
 		return nil, errWrongPassword
 	}
-	return &pb.WithID{Id: user.ID}, nil
+	return &common.StringMessage{Value: user.ID}, nil
 }
 
-func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.WithID, error) {
+func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*common.StringMessage, error) {
 	_ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
 	defer cancel()
 
@@ -146,9 +147,9 @@ func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*pb.Wit
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	id := result.InsertedID.(primitive.ObjectID).Hex()
-	return &pb.WithID{Id: id}, nil
+	return &common.StringMessage{Value: id}, nil
 }
-func (u *UserService) UserList(in *pb.Empty, stream pb.User_UserListServer) error {
+func (u *UserService) UserList(in *common.Empty, stream pb.User_UserListServer) error {
 	//1 to include, 0 to exclude
 	ctx := context.Background()
 	option := options.Find().SetProjection(bson.M{"username": 1, "email": 1, "role": 1, "status": 1})
@@ -178,12 +179,12 @@ func (u *UserService) UserList(in *pb.Empty, stream pb.User_UserListServer) erro
 	// var result
 	return nil
 }
-func (u *UserService) GetUser(ctx context.Context, in *pb.WithID) (*pb.GetUserResponse, error) {
+func (u *UserService) GetUser(ctx context.Context, in *common.StringMessage) (*pb.GetUserResponse, error) {
 	var result shared.User
 
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
-	id, err := primitive.ObjectIDFromHex(in.Id)
+	id, err := primitive.ObjectIDFromHex(in.Value)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
 	}
@@ -204,10 +205,10 @@ func (u *UserService) GetUser(ctx context.Context, in *pb.WithID) (*pb.GetUserRe
 	}, nil
 }
 
-func (u *UserService) DeleteUser(ctx context.Context, in *pb.WithID) (*pb.WithBool, error) {
+func (u *UserService) DeleteUser(ctx context.Context, in *common.StringMessage) (*common.BoolMessage, error) {
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
-	id, err := primitive.ObjectIDFromHex(in.Id)
+	id, err := primitive.ObjectIDFromHex(in.Value)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
 	}
@@ -216,14 +217,10 @@ func (u *UserService) DeleteUser(ctx context.Context, in *pb.WithID) (*pb.WithBo
 		u.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if r.DeletedCount >= 1 {
-		return &pb.WithBool{Result: true}, nil
-	} else {
-		return &pb.WithBool{Result: false}, nil
-	}
+	return &common.BoolMessage{Value: r.DeletedCount >= 1}, nil
 
 }
-func (u *UserService) EditUser(ctx context.Context, in *pb.EditUserRequest) (*pb.WithBool, error) {
+func (u *UserService) EditUser(ctx context.Context, in *pb.EditUserRequest) (*common.BoolMessage, error) {
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 	id, err := primitive.ObjectIDFromHex(in.Id)
@@ -245,15 +242,10 @@ func (u *UserService) EditUser(ctx context.Context, in *pb.EditUserRequest) (*pb
 		u.logger.Error(err.Error())
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	response := &pb.WithBool{}
-	if result.ModifiedCount == 1 {
-		response.Result = true
-	} else {
-		response.Result = false
-	}
-	return response, nil
+	return &common.BoolMessage{Value: result.ModifiedCount == 1}, nil
+
 }
-func (u *UserService) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*pb.WithBool, error) {
+func (u *UserService) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*common.BoolMessage, error) {
 	var result bool
 	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -286,7 +278,7 @@ func (u *UserService) ChangePassword(ctx context.Context, in *pb.ChangePasswordR
 	if r.ModifiedCount >= 1 {
 		result = true
 	}
-	return &pb.WithBool{Result: result}, nil
+	return &common.BoolMessage{Value: result}, nil
 
 }
 func createUniqeIndex(c *mongo.Collection) error {

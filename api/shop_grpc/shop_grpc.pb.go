@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.4
-// source: protos/shop.proto
+// source: shop.proto
 
 package shop_grpc
 
@@ -57,9 +57,9 @@ func RegisterShopServer(s grpc.ServiceRegistrar, srv ShopServer) {
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Shop_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Shop",
+	ServiceName: "shop.Shop",
 	HandlerType: (*ShopServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams:     []grpc.StreamDesc{},
-	Metadata:    "protos/shop.proto",
+	Metadata:    "shop.proto",
 }

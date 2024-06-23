@@ -1,4 +1,5 @@
 syntax = "proto3";
+package shop; 
 option go_package="github.com/aph138/shop/shop_grpc";
 
 

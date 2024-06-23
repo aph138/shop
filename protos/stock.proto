@@ -1,10 +1,14 @@
 syntax = "proto3";
+package shop;
+import "common.proto";
+
 option go_package ="github.com/aph138/shop/stock_grpc";
 
 service Stock{
-    rpc AddItem(Item) returns (AddItemResponse);
+    rpc AddItem(Item) returns (BoolMessage);
     rpc GetItem(GetItemRequest) returns (Item);
     rpc GetItemList(GetItemListRequest) returns(stream GetItemListResponse);
+    rpc DeleteItem(StringMessage) returns (BoolMessage);
 }
 
 message Item{
@@ -16,9 +20,6 @@ message Item{
     float price=6;
     string poster=7;
     repeated string photos=8;
-}
-message AddItemResponse{
-    bool result=1;
 }
 
 message GetItemRequest{

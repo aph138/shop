@@ -13,6 +13,7 @@ RUN air init
 
 COPY ./user_service .
 COPY ./api/user_grpc ./api/user_grpc
+COPY ./api/common ./api/common
 COPY ./shared ./shared
 COPY ./pkg/ ./pkg
 

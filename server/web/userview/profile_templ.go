@@ -71,7 +71,7 @@ func Profile(user shared.User) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight\"></div><div id=\"result\"></div><button class=\"bg-blue-500 hover:bg-blue-700 rounded w-full\" type=\"button\" hx-put=\"/profile\" hx-include=\"#form\" hx-target-4*=\"#result\" hx-target=\"#result\">Edit</button></form></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight\"></div><div id=\"result\"></div><button class=\"bg-gray-800 hover:bg-gray-100 text-gray-100 hover:text-gray-800 rounded w-full py-2\" type=\"button\" hx-put=\"/profile\" hx-include=\"#form\" hx-target-4*=\"#result\" hx-target=\"#result\">Edit</button></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -80,7 +80,7 @@ func Profile(user shared.User) templ.Component {
 			}
 			return templ_7745c5c3_Err
 		})
-		templ_7745c5c3_Err = layout.Main("Profile").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Main("Profile", user).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

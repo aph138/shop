@@ -4,7 +4,7 @@ import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
 
 templ Profile(user shared.User){
-    @layout.Main("Profile"){
+    @layout.Main("Profile",user){
         <div hx-ext="response-targets" class="bg-gray-100 flex justify-center min-h-screen">
             <form id="form" class="pt-6 flex flex-col items-center">
                 <div class="mb-4">
@@ -24,7 +24,7 @@ templ Profile(user shared.User){
                 </div>
 
                 <div id="result"></div>
-                <button class="bg-blue-500 hover:bg-blue-700 rounded w-full"
+                <button class="bg-gray-800 hover:bg-gray-100 text-gray-100 hover:text-gray-800 rounded w-full py-2"
                 type="button" hx-put="/profile" hx-include="#form" hx-target-4*="#result" hx-target="#result">Edit</button>
             </form>
             

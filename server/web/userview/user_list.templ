@@ -4,7 +4,7 @@ import "github.com/aph138/shop/shared"
 import "github.com/aph138/shop/server/web/layout"
 import "fmt"
 templ UserList(list []shared.User){
-    @layout.Main("list"){
+    @layout.Main("list",shared.User{}){
         <div class="container mx-auto my-10">
         <div id="result" class="text-black-500"></div>
         <div id="error" class="text-red-500"></div>

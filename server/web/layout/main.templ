@@ -1,6 +1,7 @@
 package layout
+import "github.com/aph138/shop/shared"
 
-templ Main(title string){
+templ Main(title string,user shared.User){
     <html>
     <head>
         <script src="/public/js/htmx.min.js"/>
@@ -9,7 +10,83 @@ templ Main(title string){
         <title>{ title }</title>
     </head>
     <body>
+        <nav class="bg-gray-800 p-4">
+            <div class="container mx-auto flex justify-between">
+                <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+                    <div class="flex flex-shrink-0 items-center text-white pr-4">
+                        <a href="/">SHOP</a>
+                    </div>
+                    <ul class="hidden md:flex space-x-4 mx-auto">
+                        <li><a href="/" class="text-gray-300 hover:text-white">Home</a></li>
+                        <li><a href="/item" class="text-gray-300 hover:text-white">Shop</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">About</a></li>
+                    </ul>
+                </div>
+                <div class="relative md:flex items-center space-x-4">
+                    if user.ID!=""{
+                        <div id="user-info" class="text-gray-300 relative">
+                            
+                            <span> Hello, {user.Username}!</span>
+                            <button id="user-menu-button" class="text-gray-300 hover:text-white ml-2 px-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                </svg>
+                            </button>
+                            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden">
+                                if user.Role!=0{
+                                     <a href="/admin/list">User List</a>
+                                     <a href="/admin/item">Add Item</a>
+                                }
+                                <a href="/profile" class="block px-4 py-2 text-gray-800 hover:bg-gray-200 px-1">Edit Profile</a>
+                                <a href="/password" class="block px-4 py-2 text-gray-800 hover:bg-gray-200">Change Password</a>
+                                <a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-200">Logout</a>
+                            </div>
+                            <a href="/cart">
+                            <button>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                </svg>
+                            </button>
+                            </a>
+                        </div>
+                    }else{
+                         <a href="/signin">
+                            <button class="text-gray-300 hover:text-white">Sign In</button>
+                         </a>
+                         <a href="/signup">
+                            <button class="text-gray-300 hover:text-white">Sign Up</button>
+                         </a>
+                    }
+                   
+                </div>
+                
+                <button class="md:hidden text-gray-300 hover:text-white" id="menu-button">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="hidden" id="menu">
+                <a href="/" class="block text-gray-300 hover:text-white p-2">Home</a>
+                <a href="/item" class="block text-gray-300 hover:text-white p-2">About</a>
+                <a href="#" class="block text-gray-300 hover:text-white p-2">Services</a>
+            </div>
+        </nav>
         {children...}
+        <script>
+            const menuButton = document.getElementById('menu-button');
+            const menu = document.getElementById('menu');
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
+
+            menuButton.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+            });
+            userMenuButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                userDropdown.classList.toggle('hidden');
+            });
+        </script>
     </body>
     </html>
 }

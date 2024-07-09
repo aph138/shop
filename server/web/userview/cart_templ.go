@@ -12,8 +12,10 @@ import "bytes"
 
 import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
+import "fmt"
 
-func Cart() templ.Component {
+// items consist (ID, Name, Link,Price,Poster)
+func Cart(items []shared.Item) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -32,7 +34,56 @@ func Cart() templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container mx-auto p-4\"><h1 class=\"text-2xl font-bold mb-4\">Cart</h1><div class=\"shadow-md rounded-lg p-4\"><table class=\"w-full\"><thead><tr class=\"border-b\"><th class=\"py-2 text-left\">Product</th><th class=\"py-2 text-left\">Price</th><th class=\"py-2 text-left\">Quantity</th><th class=\"py-2 text-left\">Total</th><th class=\"py-2 text-left\"></th></tr></thead> <tbody><tr class=\"border-b bg-gray-100\"><td class=\"py-2\"><div class=\"flex items-center\"><img src=\"\" class=\"w-16 h-16 object-cover rounded mr-4\"><div><p class=\"font-bold\">Name</p><p class=\"text-gray-500\">Description</p></div></div></td><td class=\"py-2\">Price</td><td class=\"py-2\"><input type=\"number\" class=\"border p-1 w-16\" value=\"1\" min=\"1\"></td><td class=\"py-2\">Total</td><td class=\"py-2\"><button class=\"text-red-500\">Remove</button></td></tr></tbody></table></div></div>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container mx-auto p-4\"><h1 class=\"text-2xl font-bold mb-4\">Cart</h1><div class=\"shadow-md rounded-lg p-4\"><table class=\"w-full\"><thead><tr class=\"border-b\"><th class=\"py-2 text-left\">Product</th><th class=\"py-2 text-left\">Price</th><th class=\"py-2 text-left\">Quantity</th><th class=\"py-2 text-left\">Total</th><th class=\"py-2 text-left\"></th></tr></thead> <tbody>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, i := range items {
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<tr class=\"border-b bg-gray-100\"><td class=\"py-2\"><div class=\"flex items-center\"><img src=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var3 string
+				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templ.JoinStringErrs(fmt.Sprintf("/img/%s", i.Poster)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 28, Col: 99}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"w-16 h-16 object-cover rounded mr-4\"><div><p class=\"font-bold\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var4 string
+				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(i.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 30, Col: 68}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p class=\"text-gray-500\">Description</p></div></div></td><td class=\"py-2\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var5 string
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(i.Price))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 35, Col: 65}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</td><td class=\"py-2\"><input type=\"number\" class=\"border p-1 w-16\" value=\"1\" min=\"1\"></td><td class=\"py-2\">Total</td><td class=\"py-2\"><button class=\"text-red-500\">Remove</button></td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</tbody></table></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -18,11 +18,6 @@ import (
 // //go:embed public
 // var public embed.FS
 
-/*
-TODO:
-1. improve ui
-4. refine code
-*/
 var (
 	logger *slog.Logger
 )
@@ -50,7 +45,7 @@ func main() {
 
 	h.Use(userHandler.AuthMiddleware())
 
-	h.StaticFS("/public", http.Dir("./public"))
+	h.Static("/public", "./public")
 	h.GET("/img/:folder/:file", serveImage)
 	h.GET("/", indexHandler.IndexGet)
 	//user handlers
@@ -65,6 +60,10 @@ func main() {
 	// stock handlers
 	h.GET("/item/:name", stockHandler.GetItem)
 	h.GET("/item", stockHandler.GetAll)
+	h.POST("/cart", userHandler.PostCart)
+	h.GET("/cart", userHandler.GetCart)
+	h.DELETE("/cart/:id", userHandler.DeleteCart)
+	h.PUT("/cart", userHandler.PutCart)
 
 	//restricted functions
 	adminGroupe := h.Group("/admin").Use(handler.AdminMiddleware())

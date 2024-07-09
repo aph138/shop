@@ -8,6 +8,7 @@ import (
 	"net/mail"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +26,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TODO: add address
 const (
 	WEEK_IN_SECOND = 60 * 60 * 24 * 7
 	WEEK_IN_MINUTE = 60 * 24 * 7
@@ -35,6 +35,7 @@ const (
 
 var (
 	JWTFile = "jwt.ed"
+	Redis   = os.Getenv("REDIS_ADDRESS")
 )
 
 type userHandler struct {
@@ -53,7 +54,7 @@ func NewUserHandler(url string, logger *slog.Logger) *userHandler {
 		logger.Error(err.Error())
 	}
 	rdb, err := myredis.NewRedis(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDRESS"),
+		Addr:     Redis,
 		Password: "",
 		DB:       0,
 	})
@@ -422,6 +423,101 @@ func (u *userHandler) PutPassword(c *gin.Context) {
 
 }
 
+func (u *userHandler) GetCart(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+	user_id := getUserCtx(c).ID
+	res, err := u.client.Cart(ctx, &common.StringMessage{Value: user_id})
+	if err != nil {
+		//TODO: check other errors
+		c.String(http.StatusInternalServerError, RetryMSG)
+	}
+	var result []shared.Item
+	for _, i := range res.Item {
+		result = append(result, shared.Item{
+			ID:     i.Id,
+			Link:   i.Link,
+			Name:   i.Name,
+			Poster: i.Poster,
+			Price:  i.Price,
+		})
+	}
+	render(c, userview.Cart(result))
+}
+func (u *userHandler) PostCart(c *gin.Context) {
+	q := c.Request.FormValue("quantity")
+	quantity, err := strconv.Atoi(q)
+	if err != nil {
+		u.logger.Error(err.Error())
+		c.String(http.StatusBadRequest, "invalid quantity value")
+		return
+	}
+	//check quantity
+	if quantity <= 0 || quantity > 100 {
+		c.String(http.StatusBadRequest, "quantity cannot be negative or greater than 100")
+		return
+	}
+	itemID := c.Request.FormValue("id")
+	if itemID == "" {
+		c.String(http.StatusBadRequest, "empty id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+
+	userID := getUserCtx(c).ID
+	result, err := u.client.AddToCart(ctx, &pb.AddToCartRequest{UserId: userID, ItemId: itemID, Quntity: uint32(quantity)})
+	if err != nil {
+		//TODO: check other errors
+		c.String(http.StatusInternalServerError, RetryMSG)
+		return
+	}
+	if !result.Value {
+		c.String(http.StatusNotModified, "did'nt add") //TODO: why couldn't add
+		return
+	}
+	c.String(http.StatusCreated, "OK")
+
+}
+func (u *userHandler) DeleteCart(c *gin.Context) {
+	userID := getUserCtx(c).ID
+	itemID := c.Param("id")
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+	result, err := u.client.DeleteFromCart(ctx, &pb.DeleteFromCartRequest{UserId: userID, ItemId: itemID})
+	if err != nil {
+		//TODO: check other errors
+		c.String(http.StatusInternalServerError, RetryMSG)
+		return
+	}
+	if !result.Value {
+		c.String(http.StatusNotModified, "") // TODO: message
+		return
+	}
+	c.String(http.StatusOK, "Ok")
+}
+func (u *userHandler) PutCart(c *gin.Context) {
+	userID := getUserCtx(c).ID
+	itemID := c.Request.PostFormValue("id")
+	quantity := uint32(1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+
+	result, err := u.client.UpdateCart(ctx, &pb.UpdateCartRequest{UserId: userID, ItemId: itemID, NewQuantity: quantity})
+	if err != nil {
+		//TODO: check
+		c.String(http.StatusInternalServerError, RetryMSG)
+		return
+	}
+	if !result.Value {
+		c.String(http.StatusNotModified, "") //TODO
+		return
+	}
+	c.String(http.StatusOK, "OK")
+}
+
+// TODO:
 func getUserCtx(c *gin.Context) *shared.User {
 	u, ok := c.Request.Context().Value(ctxUserInfo).(shared.User)
 	if !ok {

@@ -9,6 +9,7 @@ type User struct {
 	Role     uint32  `bson:"role,omitempty"`
 	Status   bool    `bson:"status,omitempty"`
 	Address  Address `bson:"address,omitempty"`
+	Cart     []Item  `bson:"cart,omitempty"`
 }
 type Address struct {
 	Address string `bson:"address,omitempty"`

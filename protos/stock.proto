@@ -36,4 +36,3 @@ message GetItemListResponse{
     float price=4;
     string poster=5;
 }
-

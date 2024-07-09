@@ -164,8 +164,6 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 		return
 	}
 	if res.Value {
-
-		//TODO: set max size uplaod
 		//save images on disk if everything went good
 		dst := filepath.Join(UPLOAD_FOLDER, fmt.Sprint(folder), filepath.Base(posterFile[0].Filename))
 		if err = c.SaveUploadedFile(posterFile[0], dst); err != nil {

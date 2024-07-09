@@ -2,6 +2,7 @@ syntax = "proto3";
 package shop; 
 option go_package = "github.com/aph138/shop/user_grpc";
 import "common.proto";
+
 service User{
     rpc Signin (SigninRequest) returns (StringMessage) {}
     rpc Signup (SignupRequest) returns (StringMessage) {}
@@ -10,6 +11,11 @@ service User{
     rpc DeleteUser(StringMessage) returns (BoolMessage){}
     rpc EditUser(EditUserRequest) returns(BoolMessage){}
     rpc ChangePassword(ChangePasswordRequest) returns (BoolMessage){}
+    rpc AddToCart(AddToCartRequest) returns (BoolMessage){}
+    rpc DeleteFromCart(DeleteFromCartRequest) returns (BoolMessage){}
+    rpc UpdateCart(UpdateCartRequest) returns (BoolMessage){}
+    rpc Cart(StringMessage) returns (CartResponse) {}
+
 }
 
 message ChangePasswordRequest{
@@ -50,4 +56,30 @@ message UserListResponse{
      string email=3;
      uint32 role=4;
      bool status=5;
+}
+
+message AddToCartRequest{
+     string user_id=1;
+     string item_id=2;
+     uint32 quntity=3;
+}
+message DeleteFromCartRequest{
+     string user_id=1;
+     string item_id=2;
+}
+message UpdateCartRequest{
+     string user_id=1;
+     string item_id=2;
+     uint32 new_quantity=3;
+}
+message CartItem{
+     string id=1;
+     string name=2;
+     string link=3;
+     string poster=4;
+     float price=5;
+     
+}
+message CartResponse{
+     repeated CartItem item=1;
 }

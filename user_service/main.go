@@ -150,8 +150,8 @@ func (u *UserService) Signup(ctx context.Context, in *pb.SignupRequest) (*common
 	return &common.StringMessage{Value: id}, nil
 }
 func (u *UserService) UserList(in *common.Empty, stream pb.User_UserListServer) error {
-	//1 to include, 0 to exclude
 	ctx := context.Background()
+	//1 to include, 0 to exclude
 	option := options.Find().SetProjection(bson.M{"username": 1, "email": 1, "role": 1, "status": 1})
 	cursor, err := u.collection.Find(ctx, bson.D{}, option)
 	if err != nil {
@@ -280,6 +280,163 @@ func (u *UserService) ChangePassword(ctx context.Context, in *pb.ChangePasswordR
 	}
 	return &common.BoolMessage{Value: result}, nil
 
+}
+
+func (u *UserService) AddToCart(ctx context.Context, in *pb.AddToCartRequest) (*common.BoolMessage, error) {
+	//check if user id is valid
+	id, err := primitive.ObjectIDFromHex(in.UserId)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong user id")
+	}
+	//check if item id is valid
+	item_id, err := primitive.ObjectIDFromHex(in.ItemId)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong item id")
+	}
+
+	cart := shared.Cart{
+		ItemID:   item_id,
+		Quantity: in.Quntity,
+	}
+
+	// TODO check if the item is already in cart
+	data := bson.M{
+		"$push": bson.M{
+			"cart": cart,
+		},
+	}
+	//
+	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	result, err := u.collection.UpdateByID(c, id, data)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.Internal, err.Error())
+	}
+	if result.ModifiedCount <= 0 {
+		return &common.BoolMessage{Value: false}, nil
+	}
+	return &common.BoolMessage{Value: true}, nil
+}
+func (u *UserService) DeleteFromCart(ctx context.Context, in *pb.DeleteFromCartRequest) (*common.BoolMessage, error) {
+	user_id, err := primitive.ObjectIDFromHex(in.UserId)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong user id")
+	}
+	item_id, err := primitive.ObjectIDFromHex(in.ItemId)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong item id")
+	}
+	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	data := bson.M{
+		"$pull": bson.M{
+			"cart": bson.M{"item_id": item_id.String()},
+		},
+	}
+	result, err := u.collection.UpdateByID(c, user_id, data)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.Internal, err.Error())
+	}
+	if result.ModifiedCount <= 0 {
+		return &common.BoolMessage{Value: false}, nil
+	}
+	return &common.BoolMessage{Value: true}, nil
+}
+func (u *UserService) UpdateCart(ctx context.Context, in *pb.UpdateCartRequest) (*common.BoolMessage, error) {
+	user_id, err := primitive.ObjectIDFromHex(in.UserId)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong user id")
+	}
+	item_id, err := primitive.ObjectIDFromHex(in.ItemId)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong item id")
+	}
+	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+
+	filter := bson.M{
+		"_id":          user_id,
+		"cart.item_id": item_id,
+	}
+	//TODO: check quantity for overflow
+	data := bson.M{
+		"$set": bson.M{
+			"cart.$.quantity": in.NewQuantity,
+		},
+	}
+
+	result, err := u.collection.UpdateOne(c, filter, data)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &common.BoolMessage{}, status.Error(codes.Internal, err.Error())
+	}
+	if result.ModifiedCount <= 0 {
+		return &common.BoolMessage{}, nil
+	}
+	return &common.BoolMessage{Value: false}, nil
+}
+
+// retrieve list of item (ID, Name, Link,Price,Poster)
+func (u *UserService) Cart(ctx context.Context, in *common.StringMessage) (*pb.CartResponse, error) {
+	user_id, err := primitive.ObjectIDFromHex(in.Value)
+	if err != nil {
+		u.logger.Error(err.Error())
+		return &pb.CartResponse{}, status.Error(codes.InvalidArgument, "wrong user id")
+	}
+
+	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	match := bson.D{
+		primitive.E{Key: "$match", Value: bson.D{primitive.E{Key: "_id", Value: user_id}}},
+	}
+	lookup := bson.D{primitive.E{
+		Key: "$lookup",
+		Value: bson.D{
+			primitive.E{Key: "from", Value: "stock"},
+			primitive.E{Key: "localField", Value: "cart.item_id"}, // Note .item_id because we have list
+			primitive.E{Key: "foreignField", Value: "_id"},
+			primitive.E{Key: "as", Value: "cart"}, //field that will be used to display the result (if already exist will be overwritten)
+		},
+	}}
+	pipeline := mongo.Pipeline{match, lookup}
+	cursor, err := u.collection.Aggregate(c, pipeline)
+
+	if err != nil {
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	defer cursor.Close(context.Background())
+	var user []shared.User
+
+	if err = cursor.All(context.Background(), &user); err != nil {
+		u.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	var result []*pb.CartItem
+	u.logger.Info(fmt.Sprintf("%v", user))
+	// TODO: check if user is not empty
+	for _, i := range user[0].Cart {
+		result = append(result, &pb.CartItem{
+			Id:     i.ID,
+			Name:   i.Name,
+			Link:   i.Link,
+			Price:  i.Price,
+			Poster: i.Poster,
+		})
+	}
+	return &pb.CartResponse{
+		Item: result,
+	}, nil
 }
 func createUniqeIndex(c *mongo.Collection) error {
 	email := mongo.IndexModel{

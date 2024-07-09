@@ -30,6 +30,10 @@ type UserClient interface {
 	DeleteUser(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*common.BoolMessage, error)
 	EditUser(ctx context.Context, in *EditUserRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
+	AddToCart(ctx context.Context, in *AddToCartRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
+	DeleteFromCart(ctx context.Context, in *DeleteFromCartRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
+	UpdateCart(ctx context.Context, in *UpdateCartRequest, opts ...grpc.CallOption) (*common.BoolMessage, error)
+	Cart(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*CartResponse, error)
 }
 
 type userClient struct {
@@ -126,6 +130,42 @@ func (c *userClient) ChangePassword(ctx context.Context, in *ChangePasswordReque
 	return out, nil
 }
 
+func (c *userClient) AddToCart(ctx context.Context, in *AddToCartRequest, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/AddToCart", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) DeleteFromCart(ctx context.Context, in *DeleteFromCartRequest, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/DeleteFromCart", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) UpdateCart(ctx context.Context, in *UpdateCartRequest, opts ...grpc.CallOption) (*common.BoolMessage, error) {
+	out := new(common.BoolMessage)
+	err := c.cc.Invoke(ctx, "/shop.User/UpdateCart", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userClient) Cart(ctx context.Context, in *common.StringMessage, opts ...grpc.CallOption) (*CartResponse, error) {
+	out := new(CartResponse)
+	err := c.cc.Invoke(ctx, "/shop.User/Cart", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -137,6 +177,10 @@ type UserServer interface {
 	DeleteUser(context.Context, *common.StringMessage) (*common.BoolMessage, error)
 	EditUser(context.Context, *EditUserRequest) (*common.BoolMessage, error)
 	ChangePassword(context.Context, *ChangePasswordRequest) (*common.BoolMessage, error)
+	AddToCart(context.Context, *AddToCartRequest) (*common.BoolMessage, error)
+	DeleteFromCart(context.Context, *DeleteFromCartRequest) (*common.BoolMessage, error)
+	UpdateCart(context.Context, *UpdateCartRequest) (*common.BoolMessage, error)
+	Cart(context.Context, *common.StringMessage) (*CartResponse, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -164,6 +208,18 @@ func (UnimplementedUserServer) EditUser(context.Context, *EditUserRequest) (*com
 }
 func (UnimplementedUserServer) ChangePassword(context.Context, *ChangePasswordRequest) (*common.BoolMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
+}
+func (UnimplementedUserServer) AddToCart(context.Context, *AddToCartRequest) (*common.BoolMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddToCart not implemented")
+}
+func (UnimplementedUserServer) DeleteFromCart(context.Context, *DeleteFromCartRequest) (*common.BoolMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFromCart not implemented")
+}
+func (UnimplementedUserServer) UpdateCart(context.Context, *UpdateCartRequest) (*common.BoolMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCart not implemented")
+}
+func (UnimplementedUserServer) Cart(context.Context, *common.StringMessage) (*CartResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Cart not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -307,6 +363,78 @@ func _User_ChangePassword_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_AddToCart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddToCartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).AddToCart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shop.User/AddToCart",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).AddToCart(ctx, req.(*AddToCartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_DeleteFromCart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteFromCartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).DeleteFromCart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shop.User/DeleteFromCart",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).DeleteFromCart(ctx, req.(*DeleteFromCartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_UpdateCart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).UpdateCart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shop.User/UpdateCart",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).UpdateCart(ctx, req.(*UpdateCartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _User_Cart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(common.StringMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).Cart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/shop.User/Cart",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).Cart(ctx, req.(*common.StringMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -337,6 +465,22 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangePassword",
 			Handler:    _User_ChangePassword_Handler,
+		},
+		{
+			MethodName: "AddToCart",
+			Handler:    _User_AddToCart_Handler,
+		},
+		{
+			MethodName: "DeleteFromCart",
+			Handler:    _User_DeleteFromCart_Handler,
+		},
+		{
+			MethodName: "UpdateCart",
+			Handler:    _User_UpdateCart_Handler,
+		},
+		{
+			MethodName: "Cart",
+			Handler:    _User_Cart_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

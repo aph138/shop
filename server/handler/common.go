@@ -15,8 +15,6 @@ func render(c *gin.Context, t templ.Component) {
 	}
 }
 
-//TODO: Move
-
 type Handler interface {
 	Close() error
 }

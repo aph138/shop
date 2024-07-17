@@ -75,6 +75,7 @@ func main() {
 	adminGroupe.GET("/list", userHandler.GetAllUser)
 	adminGroupe.POST("/item", stockHandler.PostAddItem)
 	adminGroupe.GET("/item", stockHandler.GetAddItem)
+	adminGroupe.DELETE("/item/:id", stockHandler.DeleteItem)
 
 	h.GET("/test", func(ctx *gin.Context) {
 		ctx.Writer.Write([]byte(time.Now().String()))

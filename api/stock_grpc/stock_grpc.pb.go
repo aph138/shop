@@ -71,7 +71,7 @@ func (c *stockClient) GetItemList(ctx context.Context, in *GetItemListRequest, o
 }
 
 type Stock_GetItemListClient interface {
-	Recv() (*GetItemListResponse, error)
+	Recv() (*Item, error)
 	grpc.ClientStream
 }
 
@@ -79,8 +79,8 @@ type stockGetItemListClient struct {
 	grpc.ClientStream
 }
 
-func (x *stockGetItemListClient) Recv() (*GetItemListResponse, error) {
-	m := new(GetItemListResponse)
+func (x *stockGetItemListClient) Recv() (*Item, error) {
+	m := new(Item)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func _Stock_GetItemList_Handler(srv interface{}, stream grpc.ServerStream) error
 }
 
 type Stock_GetItemListServer interface {
-	Send(*GetItemListResponse) error
+	Send(*Item) error
 	grpc.ServerStream
 }
 
@@ -189,7 +189,7 @@ type stockGetItemListServer struct {
 	grpc.ServerStream
 }
 
-func (x *stockGetItemListServer) Send(m *GetItemListResponse) error {
+func (x *stockGetItemListServer) Send(m *Item) error {
 	return x.ServerStream.SendMsg(m)
 }
 

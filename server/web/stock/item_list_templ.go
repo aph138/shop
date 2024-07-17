@@ -39,12 +39,12 @@ func ItemList(items []shared.Item, u *shared.User) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container mx-auto py-8 px-4 sm:px-6 lg:px-8\"><div class=\"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6\">")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"error\"></div><div class=\"container mx-auto py-8 px-4 sm:px-6 lg:px-8\"><div class=\"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6\" hx-ext=\"response-targets\" hx-confirm=\"Are you sure you want to delete this item?\" hx-target=\"closest div\" hx-swap=\"outerHTML swap:1s\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, item := range items {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><a href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -60,7 +60,7 @@ func ItemList(items []shared.Item, u *shared.User) templ.Component {
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.JoinStringErrs(fmt.Sprintf("/img/%s", item.Poster)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 18, Col: 85}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 23, Col: 89}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
@@ -73,7 +73,7 @@ func ItemList(items []shared.Item, u *shared.User) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 20, Col: 82}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 25, Col: 90}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -86,13 +86,36 @@ func ItemList(items []shared.Item, u *shared.User) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f ﷼", item.Price))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 21, Col: 93}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 26, Col: 101}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div></a>")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div></div></a> ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					if u.Role > 0 {
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex flex-row justify-stretch gap-1\"><button class=\"flex-1 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded\" hx-delete=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var7 string
+						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(string(templ.SafeURL(fmt.Sprintf("/admin/item/%s", item.ID))))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 33, Col: 103}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" hx-target-error=\"#error\">Delete</button> <a class=\"flex-1\"><button class=\"w-full bg-yellow-500 hover:bg-yellow-700 text-black font-bold py-2 px-4 rounded\">Eidt</button></a></div>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

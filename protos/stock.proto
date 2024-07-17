@@ -7,7 +7,7 @@ option go_package ="github.com/aph138/shop/stock_grpc";
 service Stock{
     rpc AddItem(Item) returns (BoolMessage);
     rpc GetItem(GetItemRequest) returns (Item);
-    rpc GetItemList(GetItemListRequest) returns(stream GetItemListResponse);
+    rpc GetItemList(GetItemListRequest) returns(stream Item);
     rpc DeleteItem(StringMessage) returns (BoolMessage);
 }
 
@@ -28,11 +28,4 @@ message GetItemRequest{
 message GetItemListRequest{
     int64 offset=1;
     int64 limit=2;
-}
-message GetItemListResponse{
-    string link=1;
-    string name=2;
-    int32 number=3;
-    float price=4;
-    string poster=5;
 }

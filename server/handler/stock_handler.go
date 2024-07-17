@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aph138/shop/api/common"
 	pb "github.com/aph138/shop/api/stock_grpc"
 	stockview "github.com/aph138/shop/server/web/stock"
 	"github.com/aph138/shop/shared"
@@ -68,6 +69,7 @@ func (s *stockHandler) GetAll(c *gin.Context) {
 			c.String(http.StatusInternalServerError, RetryMSG)
 			return
 		}
+		item.ID = r.Id
 		item.Link = r.Link
 		item.Name = r.Name
 		item.Price = r.Price
@@ -213,5 +215,24 @@ func (s *stockHandler) GetItem(c *gin.Context) {
 }
 
 func (s *stockHandler) DeleteItem(c *gin.Context) {
-	// s.client
+	id := c.Param("id")
+	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
+	defer cancel()
+	result, err := s.client.DeleteItem(ctx, &common.StringMessage{Value: id})
+	if err != nil {
+		if e, ok := status.FromError(err); ok {
+			if e.Code() == codes.InvalidArgument {
+				c.String(http.StatusBadRequest, "invalid id")
+				return
+			}
+		}
+		c.String(http.StatusInternalServerError, RetryMSG)
+		return
+	}
+	if result.Value {
+		c.Status(http.StatusOK)
+		return
+	}
+	c.Status(http.StatusNotModified)
+
 }

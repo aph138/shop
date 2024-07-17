@@ -139,6 +139,7 @@ func (s *stockService) GetItemList(in *pb.GetItemListRequest, stream pb.Stock_Ge
 	ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 	opt := options.Find().SetLimit(int64(in.Limit)).SetSkip(int64(in.Offset))
+	opt.SetProjection(bson.M{"photos": 0})
 	cursor, err := s.db.Find(ctx, bson.D{{}}, opt)
 	if err != nil {
 		s.logger.Error(err.Error())
@@ -151,7 +152,8 @@ func (s *stockService) GetItemList(in *pb.GetItemListRequest, stream pb.Stock_Ge
 		if err != nil {
 			s.logger.Error(err.Error())
 		}
-		stream.Send(&pb.GetItemListResponse{
+		stream.Send(&pb.Item{
+			Id:     item.ID,
 			Link:   item.Link,
 			Name:   item.Name,
 			Price:  item.Price,
@@ -168,4 +170,21 @@ func createUniqeIndex(c *mongo.Collection) error {
 	}
 	_, err := c.Indexes().CreateOne(context.Background(), name)
 	return err
+}
+func (s *stockService) DeleteItem(ctx context.Context, in *common.StringMessage) (*common.BoolMessage, error) {
+	id, err := primitive.ObjectIDFromHex(in.Value)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+	_ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+	defer cancel()
+	result, err := s.db.DeleteOne(_ctx, bson.M{"_id": id})
+	if err != nil {
+		s.logger.Error(err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if result.DeletedCount == 0 {
+		return &common.BoolMessage{}, nil
+	}
+	return &common.BoolMessage{Value: true}, nil
 }

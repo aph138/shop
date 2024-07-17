@@ -38,7 +38,7 @@ func Main(title string, user *shared.User) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title></head><body><nav class=\"bg-gray-800 p-4\"><div class=\"container mx-auto flex justify-between\"><div class=\"flex flex-1 items-center justify-center sm:items-stretch sm:justify-start\"><div class=\"flex flex-shrink-0 items-center text-white pr-4\"><a href=\"/\">SHOP</a></div><ul class=\"hidden md:flex space-x-4 mx-auto\"><li><a href=\"/\" class=\"text-gray-300 hover:text-white\">Home</a></li><li><a href=\"/item\" class=\"text-gray-300 hover:text-white\">Shop</a></li><li><a href=\"#\" class=\"text-gray-300 hover:text-white\">About</a></li></ul></div><div class=\"relative md:flex items-center space-x-4\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title></head><body><nav class=\"bg-gray-800 p-4\"><div class=\"container mx-auto flex justify-between\"><!-- flex flex-1 items-center justify-center sm:items-stretch sm:justify-start --><div class=\"flex items-center justify-center sm:items-stretch sm:justify-start\"><!-- flex flex-shrink-0 items-center text-white pr-4 --><div class=\"flex flex-shrink-0 items-center text-white pr-4\"><a href=\"/\">SHOP</a></div><!-- <ul class=\"hidden md:flex space-x-4 mx-auto\">\n                        <li><a href=\"/\" class=\"text-gray-300 hover:text-white\">Home</a></li>\n                        <li><a href=\"/item\" class=\"text-gray-300 hover:text-white\">Shop</a></li>\n                        <li><a href=\"#\" class=\"text-gray-300 hover:text-white\">About</a></li>\n                    </ul> --></div><div class=\"relative md:flex items-center space-x-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -50,7 +50,7 @@ func Main(title string, user *shared.User) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(user.Username)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/layout/main.templ`, Line: 29, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/layout/main.templ`, Line: 30, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -76,7 +76,7 @@ func Main(title string, user *shared.User) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><button class=\"md:hidden text-gray-300 hover:text-white\" id=\"menu-button\"><svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 12h16m-7 6h7\"></path></svg></button></div><div class=\"hidden\" id=\"menu\"><a href=\"/\" class=\"block text-gray-300 hover:text-white p-2\">Home</a> <a href=\"/item\" class=\"block text-gray-300 hover:text-white p-2\">About</a> <a href=\"#\" class=\"block text-gray-300 hover:text-white p-2\">Services</a></div></nav>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div><!-- <button class=\"md:hidden text-gray-300 hover:text-white\" id=\"menu-button\">\n                    <svg class=\"w-6 h-6\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\">\n                        <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 6h16M4 12h16m-7 6h7\"></path>\n                    </svg>\n                </button> --></div><!-- <div class=\"md:hidden sm:hidden lg:hidden\" id=\"menu\">\n                <a href=\"/\" class=\"block text-gray-300 hover:text-white p-2\">Home</a>\n                <a href=\"/item\" class=\"block text-gray-300 hover:text-white p-2\">About</a>\n                <a href=\"#\" class=\"block text-gray-300 hover:text-white p-2\">Services</a>\n            </div> --></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -84,7 +84,7 @@ func Main(title string, user *shared.User) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script>\n            const menuButton = document.getElementById('menu-button');\n            const menu = document.getElementById('menu');\n            const userMenuButton = document.getElementById('user-menu-button');\n            const userDropdown = document.getElementById('user-dropdown');\n\n            menuButton.addEventListener('click', () => {\n                menu.classList.toggle('hidden');\n            });\n            userMenuButton.addEventListener('click', (e) => {\n                e.preventDefault();\n                userDropdown.classList.toggle('hidden');\n            });\n        </script></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script>\n            // const menuButton = document.getElementById('menu-button');\n            // const menu = document.getElementById('menu');\n            const userMenuButton = document.getElementById('user-menu-button');\n            const userDropdown = document.getElementById('user-dropdown');\n\n            // menuButton.addEventListener('click', () => {\n            //   menu.classList.toggle('hidden');\n            //});\n            userMenuButton.addEventListener('click', (e) => {\n                e.preventDefault();\n                userDropdown.classList.toggle('hidden');\n            });\n        </script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

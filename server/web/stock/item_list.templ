@@ -4,8 +4,8 @@ import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
 import "fmt"
 
-templ ItemList(items []shared.Item){
-    @layout.Main("List",shared.User{}){
+templ ItemList(items []shared.Item,u *shared.User){
+    @layout.Main("List",u){
         if len(items)<1{
             <div class="flex justify-center min-h-screen items-center">No Item has been found</div>
         }else{

@@ -75,7 +75,7 @@ func (s *stockHandler) GetAll(c *gin.Context) {
 		item.Number = r.Number
 		result = append(result, item)
 	}
-	render(c, stockview.ItemList(result))
+	render(c, stockview.ItemList(result, getUserCtx(c)))
 
 }
 func (s *stockHandler) PostAddItem(c *gin.Context) {
@@ -186,7 +186,7 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 
 }
 func (s *stockHandler) GetAddItem(c *gin.Context) {
-	render(c, stockview.AddItem())
+	render(c, stockview.AddItem(getUserCtx(c)))
 }
 
 func (s *stockHandler) GetItem(c *gin.Context) {
@@ -209,7 +209,7 @@ func (s *stockHandler) GetItem(c *gin.Context) {
 	if len(item.ID) < 1 {
 		c.String(http.StatusBadRequest, "no item has founded")
 	}
-	render(c, stockview.Item(item))
+	render(c, stockview.Item(item, getUserCtx(c)))
 }
 
 func (s *stockHandler) DeleteItem(c *gin.Context) {

@@ -4,8 +4,8 @@ import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
 import "fmt"
 
-templ Item(i shared.Item){
-    @layout.Main(i.Name,shared.User{}){
+templ Item(i shared.Item,u *shared.User){
+    @layout.Main(i.Name,u){
         <div class="flex flex-col justify-between lg:flex-row gap-16 lg:items-center">
             <div class="bg-white shadow-md rounded-lg p-6">
                 <div class="flex flex-col md:flex-row">

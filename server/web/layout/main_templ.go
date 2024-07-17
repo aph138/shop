@@ -12,7 +12,7 @@ import "bytes"
 
 import "github.com/aph138/shop/shared"
 
-func Main(title string, user shared.User) templ.Component {
+func Main(title string, user *shared.User) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -61,7 +61,7 @@ func Main(title string, user shared.User) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if user.Role != 0 {
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a href=\"/admin/list\">User List</a> <a href=\"/admin/item\">Add Item</a> ")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<a class=\"block px-4 py-2 text-gray-800 hover:bg-gray-200\" href=\"/admin/list\">User List</a> <a class=\"block px-4 py-2 text-gray-800 hover:bg-gray-200\" href=\"/admin/item\">Add Item</a> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

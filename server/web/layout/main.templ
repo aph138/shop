@@ -1,7 +1,7 @@
 package layout
 import "github.com/aph138/shop/shared"
 
-templ Main(title string,user shared.User){
+templ Main(title string,user *shared.User){
     <html>
     <head>
         <script src="/public/js/htmx.min.js"/>
@@ -34,8 +34,8 @@ templ Main(title string,user shared.User){
                             </button>
                             <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg hidden">
                                 if user.Role!=0{
-                                     <a href="/admin/list">User List</a>
-                                     <a href="/admin/item">Add Item</a>
+                                     <a class="block px-4 py-2 text-gray-800 hover:bg-gray-200" href="/admin/list">User List</a>
+                                     <a class="block px-4 py-2 text-gray-800 hover:bg-gray-200" href="/admin/item">Add Item</a>
                                 }
                                 <a href="/profile" class="block px-4 py-2 text-gray-800 hover:bg-gray-200 px-1">Edit Profile</a>
                                 <a href="/password" class="block px-4 py-2 text-gray-800 hover:bg-gray-200">Change Password</a>

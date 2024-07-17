@@ -287,13 +287,13 @@ func (u *UserService) AddToCart(ctx context.Context, in *pb.AddToCartRequest) (*
 	id, err := primitive.ObjectIDFromHex(in.UserId)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong user id")
+		return nil, status.Error(codes.InvalidArgument, "wrong user id")
 	}
 	//check if item id is valid
 	item_id, err := primitive.ObjectIDFromHex(in.ItemId)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong item id")
+		return nil, status.Error(codes.InvalidArgument, "wrong item id")
 	}
 
 	cart := shared.Cart{
@@ -314,7 +314,7 @@ func (u *UserService) AddToCart(ctx context.Context, in *pb.AddToCartRequest) (*
 	result, err := u.collection.UpdateByID(c, id, data)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if result.ModifiedCount <= 0 {
 		return &common.BoolMessage{Value: false}, nil
@@ -325,25 +325,25 @@ func (u *UserService) DeleteFromCart(ctx context.Context, in *pb.DeleteFromCartR
 	user_id, err := primitive.ObjectIDFromHex(in.UserId)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong user id")
+		return nil, status.Error(codes.InvalidArgument, "wrong user id")
 	}
 	item_id, err := primitive.ObjectIDFromHex(in.ItemId)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong item id")
+		return nil, status.Error(codes.InvalidArgument, "wrong item id")
 	}
 	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
 
 	data := bson.M{
 		"$pull": bson.M{
-			"cart": bson.M{"item_id": item_id.String()},
+			"cart": bson.M{"item_id": item_id},
 		},
 	}
 	result, err := u.collection.UpdateByID(c, user_id, data)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if result.ModifiedCount <= 0 {
 		return &common.BoolMessage{Value: false}, nil
@@ -354,12 +354,12 @@ func (u *UserService) UpdateCart(ctx context.Context, in *pb.UpdateCartRequest) 
 	user_id, err := primitive.ObjectIDFromHex(in.UserId)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong user id")
+		return nil, status.Error(codes.InvalidArgument, "wrong user id")
 	}
 	item_id, err := primitive.ObjectIDFromHex(in.ItemId)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.InvalidArgument, "wrong item id")
+		return nil, status.Error(codes.InvalidArgument, "wrong item id")
 	}
 	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
@@ -378,7 +378,7 @@ func (u *UserService) UpdateCart(ctx context.Context, in *pb.UpdateCartRequest) 
 	result, err := u.collection.UpdateOne(c, filter, data)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &common.BoolMessage{}, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if result.ModifiedCount <= 0 {
 		return &common.BoolMessage{}, nil
@@ -391,11 +391,13 @@ func (u *UserService) Cart(ctx context.Context, in *common.StringMessage) (*pb.C
 	user_id, err := primitive.ObjectIDFromHex(in.Value)
 	if err != nil {
 		u.logger.Error(err.Error())
-		return &pb.CartResponse{}, status.Error(codes.InvalidArgument, "wrong user id")
+		return nil, status.Error(codes.InvalidArgument, "wrong user id")
 	}
 
 	c, cancel := context.WithTimeout(context.Background(), TIMEOUT)
 	defer cancel()
+
+	// imitate relationship in mongo db
 	match := bson.D{
 		primitive.E{Key: "$match", Value: bson.D{primitive.E{Key: "_id", Value: user_id}}},
 	}
@@ -425,6 +427,9 @@ func (u *UserService) Cart(ctx context.Context, in *common.StringMessage) (*pb.C
 	var result []*pb.CartItem
 	u.logger.Info(fmt.Sprintf("%v", user))
 	// TODO: check if user is not empty
+	if len(user) == 0 {
+		return nil, status.Error(codes.NotFound, "user not founded")
+	}
 	for _, i := range user[0].Cart {
 		result = append(result, &pb.CartItem{
 			Id:     i.ID,

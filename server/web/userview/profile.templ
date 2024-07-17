@@ -3,7 +3,7 @@ package userview
 import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
 
-templ Profile(user shared.User){
+templ Profile(user *shared.User){
     @layout.Main("Profile",user){
         <div hx-ext="response-targets" class="bg-gray-100 flex justify-center min-h-screen">
             <form id="form" class="pt-6 flex flex-col items-center">

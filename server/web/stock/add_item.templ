@@ -2,8 +2,9 @@ package stockview
 
 import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
-templ AddItem(){
-    @layout.Main("Add Item",shared.User{}){
+
+templ AddItem(u *shared.User){
+    @layout.Main("Add Item",u){
         <div class="container mx-auto p-8">
             <form id="form" hx-ext="response-targets" hx-encoding="multipart/form-data">
                

@@ -2,7 +2,7 @@ package web
 import "github.com/aph138/shop/server/web/layout"
 import "github.com/aph138/shop/shared"
 
-templ Index(u shared.User){
+templ Index(u *shared.User){
     @layout.Main("Index",u){
         <a>example</a>
     }

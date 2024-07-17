@@ -75,7 +75,7 @@ func (u *userHandler) Close() error {
 }
 
 func (u *userHandler) GetSignin(c *gin.Context) {
-	render(c, userview.Signin())
+	render(c, userview.Signin(&shared.User{}))
 }
 
 func (u *userHandler) PostSignin(c *gin.Context) {
@@ -121,7 +121,7 @@ func (u *userHandler) PostSignin(c *gin.Context) {
 }
 
 func (u *userHandler) GetSignup(c *gin.Context) {
-	render(c, userview.Signup())
+	render(c, userview.Signup(&shared.User{}))
 }
 
 func (u *userHandler) PostSignup(c *gin.Context) {
@@ -219,7 +219,7 @@ func (u *userHandler) GetAllUser(c *gin.Context) {
 		}
 		userList = append(userList, u)
 	}
-	render(c, userview.UserList(userList))
+	render(c, userview.UserList(userList, getUserCtx(c)))
 }
 
 type ctxKey string
@@ -318,7 +318,7 @@ func (u *userHandler) DeleteUser(c *gin.Context) {
 	c.Writer.Flush()
 }
 func (u *userHandler) GetUserProfile(c *gin.Context) {
-	render(c, userview.Profile(*getUserCtx(c)))
+	render(c, userview.Profile(getUserCtx(c)))
 }
 func (u *userHandler) PutUserProfile(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
@@ -378,7 +378,7 @@ func (u *userHandler) PutUserProfile(c *gin.Context) {
 
 }
 func (u *userHandler) GetPassword(c *gin.Context) {
-	render(c, userview.Password())
+	render(c, userview.Password(getUserCtx(c)))
 }
 func (u *userHandler) PutPassword(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), GRPC_TIMEOUT)
@@ -432,6 +432,7 @@ func (u *userHandler) GetCart(c *gin.Context) {
 		//TODO: check other errors
 		c.String(http.StatusInternalServerError, RetryMSG)
 	}
+	//TODO: total price
 	var result []shared.Item
 	for _, i := range res.Item {
 		result = append(result, shared.Item{
@@ -442,7 +443,7 @@ func (u *userHandler) GetCart(c *gin.Context) {
 			Price:  i.Price,
 		})
 	}
-	render(c, userview.Cart(result))
+	render(c, userview.Cart(result, getUserCtx(c)))
 }
 func (u *userHandler) PostCart(c *gin.Context) {
 	q := c.Request.FormValue("quantity")
@@ -491,10 +492,10 @@ func (u *userHandler) DeleteCart(c *gin.Context) {
 		return
 	}
 	if !result.Value {
-		c.String(http.StatusNotModified, "") // TODO: message
+		c.String(http.StatusNotModified, "didn't delete") // TODO: message
 		return
 	}
-	c.String(http.StatusOK, "Ok")
+	c.Status(http.StatusOK)
 }
 func (u *userHandler) PutCart(c *gin.Context) {
 	userID := getUserCtx(c).ID
@@ -514,7 +515,8 @@ func (u *userHandler) PutCart(c *gin.Context) {
 		c.String(http.StatusNotModified, "") //TODO
 		return
 	}
-	c.String(http.StatusOK, "OK")
+	c.Status(http.StatusOK)
+	c.Writer.Flush()
 }
 
 // TODO:

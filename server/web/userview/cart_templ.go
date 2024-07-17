@@ -15,7 +15,7 @@ import "github.com/aph138/shop/shared"
 import "fmt"
 
 // items consist (ID, Name, Link,Price,Poster)
-func Cart(items []shared.Item) templ.Component {
+func Cart(items []shared.Item, u *shared.User) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, templ_7745c5c3_W io.Writer) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templ_7745c5c3_W.(*bytes.Buffer)
 		if !templ_7745c5c3_IsBuffer {
@@ -34,7 +34,7 @@ func Cart(items []shared.Item) templ.Component {
 				templ_7745c5c3_Buffer = templ.GetBuffer()
 				defer templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container mx-auto p-4\"><h1 class=\"text-2xl font-bold mb-4\">Cart</h1><div class=\"shadow-md rounded-lg p-4\"><table class=\"w-full\"><thead><tr class=\"border-b\"><th class=\"py-2 text-left\">Product</th><th class=\"py-2 text-left\">Price</th><th class=\"py-2 text-left\">Quantity</th><th class=\"py-2 text-left\">Total</th><th class=\"py-2 text-left\"></th></tr></thead> <tbody>")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container mx-auto p-4\" hx-ext=\"response-targets\"><div id=\"error\"></div><h1 class=\"text-2xl font-bold mb-4\">Cart</h1><div class=\"shadow-md rounded-lg p-4\"><table class=\"w-full\"><thead><tr class=\"border-b\"><th class=\"py-2 text-left\">Product</th><th class=\"py-2 text-left\">Price</th><th class=\"py-2 text-left\">Quantity</th><th class=\"py-2 text-left\">Total</th><th class=\"py-2 text-left\"></th></tr></thead> <tbody hx-confirm=\"Are you sure?\" hx-target=\"closest tr\" hx-swap=\"outerHTML swap:1s\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -44,9 +44,9 @@ func Cart(items []shared.Item) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
-				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templ.JoinStringErrs(fmt.Sprintf("/img/%s", i.Poster)))
+				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(string(templ.SafeURL("/img/" + i.Poster)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 28, Col: 99}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 29, Col: 85}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -59,7 +59,7 @@ func Cart(items []shared.Item) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(i.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 30, Col: 68}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 31, Col: 68}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -72,13 +72,26 @@ func Cart(items []shared.Item) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(i.Price))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 35, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 36, Col: 65}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</td><td class=\"py-2\"><input type=\"number\" class=\"border p-1 w-16\" value=\"1\" min=\"1\"></td><td class=\"py-2\">Total</td><td class=\"py-2\"><button class=\"text-red-500\">Remove</button></td></tr>")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</td><td class=\"py-2\"><input type=\"number\" class=\"border p-1 w-16\" value=\"1\" min=\"1\"></td><td class=\"py-2\">Total</td><td class=\"py-2\"><button hx-target-error=\"#error\" hx-delete=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(string(templ.SafeURL("/cart/" + i.ID)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/userview/cart.templ`, Line: 44, Col: 83}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\" class=\"text-red-500 \">Remove</button></td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -92,7 +105,7 @@ func Cart(items []shared.Item) templ.Component {
 			}
 			return templ_7745c5c3_Err
 		})
-		templ_7745c5c3_Err = layout.Main("Cart", shared.User{}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layout.Main("Cart", u).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

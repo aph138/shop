@@ -15,6 +15,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//TODO: add discount
+//TODO: add category
+//TODO: add order functionality
+
 // //go:embed public
 // var public embed.FS
 
@@ -33,7 +37,7 @@ func main() {
 	if err != nil {
 		logger.Error("err when creating stock handler: " + err.Error())
 	}
-	indexHandler := handler.NewIndexHandler(logger)
+	_ = handler.NewIndexHandler(logger)
 	handlers := []handler.Handler{
 		userHandler,
 		stockHandler,
@@ -47,7 +51,7 @@ func main() {
 
 	h.Static("/public", "./public")
 	h.GET("/img/:folder/:file", serveImage)
-	h.GET("/", indexHandler.IndexGet)
+	h.GET("/", stockHandler.GetAll)
 	//user handlers
 	h.GET("/signin", userHandler.GetSignin)
 	h.POST("/signin", userHandler.PostSignin)

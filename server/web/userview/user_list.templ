@@ -3,8 +3,8 @@ package userview
 import "github.com/aph138/shop/shared"
 import "github.com/aph138/shop/server/web/layout"
 import "fmt"
-templ UserList(list []shared.User){
-    @layout.Main("list",shared.User{}){
+templ UserList(list []shared.User, u *shared.User){
+    @layout.Main("list",u){
         <div class="container mx-auto my-10">
         <div id="result" class="text-black-500"></div>
         <div id="error" class="text-red-500"></div>
@@ -36,7 +36,6 @@ templ UserList(list []shared.User){
                         }else{
                             <td class=" p-3bg-red-500">disable</td>
                         }
-                    <!--TODO: fix delete user row bug-->
                     <td class="p-3">
                         <button
                         class="text-red-500 hover:text-red-700"

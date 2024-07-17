@@ -181,7 +181,7 @@ func (s *stockHandler) PostAddItem(c *gin.Context) {
 				return
 			}
 		}
-		c.String(http.StatusCreated, "item successfully has been added")
+		c.Writer.Header().Add("HX-Redirect", "/")
 	} else {
 		c.String(http.StatusNoContent, "item didn't add")
 	}

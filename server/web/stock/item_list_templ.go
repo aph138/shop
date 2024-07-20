@@ -39,12 +39,12 @@ func ItemList(items []shared.Item, u *shared.User) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"error\"></div><div class=\"container mx-auto py-8 px-4 sm:px-6 lg:px-8\"><div class=\"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6\" hx-ext=\"response-targets\" hx-confirm=\"Are you sure you want to delete this item?\" hx-target=\"closest div\" hx-swap=\"outerHTML swap:1s\">")
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"error\"></div><div class=\"container mx-auto py-8 px-4 sm:px-6 lg:px-8\"><div class=\"grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6\" hx-ext=\"response-targets\" hx-confirm=\"Are you sure you want to delete this item?\" hx-target=\"closest #item\" hx-swap=\"outerHTML swap:1s\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, item := range items {
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><a href=\"")
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div id=\"item\"><a href=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -104,7 +104,7 @@ func ItemList(items []shared.Item, u *shared.User) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(string(templ.SafeURL(fmt.Sprintf("/admin/item/%s", item.ID))))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 33, Col: 103}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `server/web/stock/item_list.templ`, Line: 33, Col: 107}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
